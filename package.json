@@ -1,0 +1,33 @@
+{
+  "name": "smart-dashboard",
+  "version": "1.0.0",
+  "description": "PWA Smart Dashboard Architecture",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "npx http-server public",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pwa",
+    "spa",
+    "architecture"
+  ],
+  "author": "Student",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1l4ke/mobileapp.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/1l4ke/mobileapp/issues"
+  },
+  "homepage": "https://github.com/1l4ke/mobileapp#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  }
+}

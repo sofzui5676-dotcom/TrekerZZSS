@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Dashboard</title>
+    <meta name="theme-color" content="#6366f1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="stylesheet" href="./src/styles/main.css" type="text/css">
+    <link rel="stylesheet" href="./src/styles/variables.css">
+    <link rel="stylesheet" href="./src/modules/tasks/tasks.css" type="text/css">
+    <link rel="stylesheet" href="./src/modules/notes/notes.css" type="text/css">
+    <link rel="stylesheet" href="./src/modules/tracker/tracker.css" type="text/css">
+    <meta name="theme-color" content="#6366f1">
+    
+   
+</head>
+
+<body>
+   
+    <div id="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+  <h1>📊 Smart Dashboard</h1>
+  <div class="user-profile" id="user-profile">
+    <span id="user-display" class="user-display" style="padding:0.75rem 1rem;border-radius:12px;background:#f3f4f6;font-weight:500;font-size:0.95rem;">Гость</span>
+    <button onclick="logout()" class="logout-btn" style="padding:0.5rem 1rem;background:#ef4444;color:white;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;">Выход</button>
+    <label class="theme-toggle">
+      <input type="checkbox" id="themeSwitch">
+      <span class="slider"></span>
+    </label>
+    <div class="points-display">
+      <span class="points-label">баллов</span>
+      <span id="total-points" class="points-value">0</span>
+    </div>
+  </div>
+</div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation">
+            <button data-route="tasks" class="nav-btn active">
+                <span class="nav-icon">📝</span> Задачи
+            </button>
+            <button data-route="notes" class="nav-btn">
+                <span class="nav-icon">📔</span> Заметки  
+            </button>
+            <button data-route="tracker" class="nav-btn">
+                <span class="nav-icon">📈</span> Прогресс
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-container">
+  <div id="auth-root" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#f8f9fa;">
+    <div style="max-width:400px;width:100%;padding:3rem 2rem;border-radius:16px;background:white;box-shadow:0 20px 40px rgba(0,0,0,0.1);text-align:center;">
+      <h1 style="font-size:2.5rem;margin-bottom:1rem;color:#333;">Smart Dashboard</h1>
+      <p style="margin-bottom:2rem;color:#666;">Вход / Регистрация</p>
+      
+      <div style="display:flex;gap:1rem;margin-bottom:2rem;">
+        <button id="tab-login" class="tab-btn active" style="flex:1;padding:1rem;border:2px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:500;">Вход</button>
+        <button id="tab-register" class="tab-btn" style="flex:1;padding:1rem;border:2px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:500;">Регистрация</button>
+      </div>
+      
+      <form id="auth-form" style="display:flex;flex-direction:column;gap:1.5rem;">
+        <div style="text-align:left;">
+          <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Email</label>
+          <input id="auth-email" type="email" placeholder="demo@gmail.com" required style="width:100%;padding:1rem;border:2px solid #ddd;border-radius:8px;font-size:1rem;">
+        </div>
+        <div style="text-align:left;">
+          <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Пароль</label>
+          <input id="auth-password" type="password" minlength="6" placeholder="******" required style="width:100%;padding:1rem;border:2px solid #ddd;border-radius:8px;font-size:1rem;">
+        </div>
+        <button type="submit" id="auth-submit" style="width:100%;padding:1rem;background:#6366f1;color:white;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;">Войти</button>
+      </form>
+      
+      <div id="auth-message" style="margin-top:1.5rem;padding:1rem;border-radius:8px;font-weight:500;"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+    // Проверяем сохранённый session
+const savedUser = sessionStorage.getItem('authUser');
+if (savedUser) {
+  window.currentUser = JSON.parse(savedUser);
+  const userDisplay = document.getElementById('user-display');
+  if (userDisplay && window.currentUser.email !== 'Гость') {
+    userDisplay.textContent = window.currentUser.email;
+    userDisplay.style.background = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
+    userDisplay.style.color = 'white';
+    
+    // Запускаем dashboard БЕЗ auth экрана
+    document.getElementById('auth-root').style.display = 'none';
+    setTimeout(async () => {
+      await window.Core.init();
+      window.Router.init();
+      await window.Core.loadModule('tasks');
+    }, 500);
+  }
+}
+const form = document.getElementById('auth-form');
+const tabs = document.querySelectorAll('.tab-btn');
+const message = document.getElementById('auth-message');
+const submitBtn = document.getElementById('auth-submit');
+let mode = 'login';
+
+tabs[0].onclick = () => { 
+  mode = 'login'; 
+  tabs[0].classList.add('active'); 
+  tabs[1].classList.remove('active'); 
+  submitBtn.textContent = 'Войти'; 
+};
+tabs[1].onclick = () => { 
+  mode = 'register'; 
+  tabs[1].classList.add('active'); 
+  tabs[0].classList.remove('active'); 
+  submitBtn.textContent = 'Зарегистрироваться'; 
+};
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  message.textContent = '⏳ Загрузка...';
+  submitBtn.disabled = true;
+
+  try {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    
+    const url = mode === 'register' ? '/api/register' : '/api/login';
+    const res = await fetch(url, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email, password }),
+});
+
+if (!res.ok) {
+  const text = await res.text();
+  throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
+}
+
+const data = await res.json();
+    
+    message.innerHTML = mode === 'register' 
+      ? '✅ Регистрация OK. Проверь почту.' 
+      : '✅ Вход выполнен!';
+    
+    setTimeout(async () => {
+      // ✅ Сохраняем пользователя ГЛОБАЛЬНО
+      window.currentUser = { email };
+      // Сохраняем в sessionStorage (работает в PWA)
+sessionStorage.setItem('authUser', JSON.stringify({email}));
+sessionStorage.setItem('authSession', JSON.stringify(data.session || {}));
+      
+      // ✅ Обновляем имя в nav
+      const userDisplay = document.getElementById('user-display');
+      userDisplay.textContent = email;
+      userDisplay.style.background = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
+      userDisplay.style.color = 'white';
+      
+      // Скрываем auth
+      document.getElementById('auth-root').remove();
+      
+      // Запускаем dashboard
+      await window.Core.init();
+      window.Router.init();
+      await window.Core.loadModule('tasks');
+    }, 1500);
+    
+  } catch (err) {
+    message.textContent = err.message.includes('not confirmed') 
+      ? '📧 Подтверди email' 
+      : `❌ ${err.message}`;
+  } finally {
+    submitBtn.disabled = false;
+  }
+};
+window.logout = function() {
+  sessionStorage.removeItem('authUser');
+  sessionStorage.removeItem('authSession');
+  window.currentUser = null;
+  document.getElementById('main-container').innerHTML = `
+    <div style="text-align:center;padding:3rem;">
+      <h2>👋 До свидания!</h2>
+      <button onclick="location.reload()" style="padding:1rem 2rem;background:#6366f1;color:white;border:none;border-radius:8px;">Войти снова</button>
+    </div>
+  `;
+};
+</script>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2026 Smart Dashboard PWA | Работает оффлайн</p>
+        </footer>
+    </div>
+
+    <!-- Относительные пути от public/ -->
+    
+    
+    <script src="/src/core/router.js"></script>
+    
+    <script src="/src/core/dataService.js"></script>
+    <script src="/src/core/notifications.js"></script>
+    <script src="/src/core/cacheService.js"></script>
+    <script src="/src/core/uiContainer.js"></script>
+    <script src="/src/modules/tasks/tasks.js"></script>
+    <script src="/src/modules/tasks/taskUI.js"></script>
+    <script src="/src/modules/notes/notes.js"></script>
+    <script src="/src/modules/notes/notesUI.js"></script>
+    <script src="/src/modules/tracker/tracker.js"></script>
+    <script src="/src/modules/tracker/trackerUI.js"></script>
+    
+    <script>
+async function init() {
+  console.log('🚀 MVP Dashboard с auth');
+  
+  const container = document.getElementById('main-container');
+  
+  // Показываем auth экран
+  
+}
+
+init();
+</script>
+        <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log('✅ SW registered'))
+    .catch(err => console.log('❌ SW failed:', err));
+}
+</script>
+<script>
+const themeSwitch = document.getElementById('themeSwitch');
+if (themeSwitch) {
+  const html = document.documentElement;
+  const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  html.setAttribute('data-theme', savedTheme);
+  themeSwitch.checked = savedTheme === 'dark';
+  themeSwitch.onchange = () => {
+    const theme = themeSwitch.checked ? 'dark' : 'light';
+    html.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  };
+}
+</script>
+</body>
+</html>
