@@ -525,7 +525,7 @@ form.onsubmit = async (e) => {
 
         if (!res.ok) {
             const text = await res.text();
-            throw new Error(`HTTP ${res.status}: ${text}`);
+            throw new Error(`HTTP ${res.status}: ${text} ||| ${url}`);
         }
 
         const data = await res.json();
