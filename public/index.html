@@ -512,6 +512,7 @@ form.onsubmit = async (e) => {
     try {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
+        const username = document.getElementById('auth-username').value;
         
         const url = mode === 'register' ? 'register' : 'login';
         
@@ -528,7 +529,7 @@ form.onsubmit = async (e) => {
 
         const data = await res.json();
         
-        showMessage(mode === 'register' ? '✅ Регистрация! Проверь почту.' : '✅ Вход выполнен!', 'success');
+        showMessage(mode === 'register' ? '✅ Регистрация!': '✅ Вход выполнен!', 'success');
         
         setTimeout(async () => {
             window.currentUser = { email, username: username || email.split('@')[0] };
