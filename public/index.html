@@ -512,15 +512,13 @@ form.onsubmit = async (e) => {
     try {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
-        const username = document.getElementById('auth-username').value;
         
-        const url = mode === 'register' ? '/api/register' : '/api/login';
-        const body = mode === 'register' ? { email, password, username } : { email, password };
+        const url = mode === 'register' ? 'register' : 'login';
         
-        const res = await fetch(url, {
+        const res = await fetch('https://trekerzzss-1.onrender.com/${url}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body: JSON.stringify({ email, password }),
         });
 
         if (!res.ok) {
