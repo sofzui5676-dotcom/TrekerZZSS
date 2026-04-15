@@ -1,7 +1,7 @@
 const API_URL =
   window.location.hostname === "localhost"
     ? "http://localhost:4000/api"
-    : "https://mobileapp-backend-athn.onrender.com";
+    : "https://trekerzzss-1.onrender.com";
 
 export async function registerUser(email, password) {
   const res = await fetch(`${API_URL}/register`, {
