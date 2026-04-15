@@ -515,7 +515,7 @@ form.onsubmit = async (e) => {
         
         const url = mode === 'register' ? 'register' : 'login';
         
-        const res = await fetch('https://trekerzzss-1.onrender.com/${url}', {
+        const res = await fetch(`https://trekerzzss-1.onrender.com/${url}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
