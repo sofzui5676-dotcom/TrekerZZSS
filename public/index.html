@@ -12,319 +12,182 @@
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- System Styles (variables for JS modules) -->
     <link rel="stylesheet" href="./src/styles/variables.css">
     
     <style>
-        /* === БАЗОВЫЕ СТИЛИ === */
+        /* === БАЗОВЫЕ СТИЛИ (без изменений) === */
         *{margin:0;padding:0;box-sizing:border-box}
         :root{
-            --primary: #FF9AAE;
-            --primary-light: #FFB6C1;
-            --primary-dark: #E8839A;
-            --secondary: #80CBC4;
-            --secondary-dark: #5BA89F;
-            --bg: #FAFAFA;
-            --surface: #FFFFFF;
-            --surface-secondary: #F8F8F8;
-            --text: #2C2C2C;
-            --text-light: #8E8E8E;
-            --border: #F0F0F0;
-            --shadow: 0 8px 32px rgba(0,0,0,0.04);
-            --shadow-lg: 0 16px 48px rgba(0,0,0,0.08);
-            --radius-lg: 32px;
-            --radius-md: 24px;
-            --radius-sm: 16px;
+            --primary: #FF9AAE; --primary-light: #FFB6C1; --primary-dark: #E8839A;
+            --secondary: #80CBC4; --secondary-dark: #5BA89F;
+            --bg: #FAFAFA; --surface: #FFFFFF; --surface-secondary: #F8F8F8;
+            --text: #2C2C2C; --text-light: #8E8E8E; --border: #F0F0F0;
+            --shadow: 0 8px 32px rgba(0,0,0,0.04); --shadow-lg: 0 16px 48px rgba(0,0,0,0.08);
+            --radius-lg: 32px; --radius-md: 24px; --radius-sm: 16px;
         }
         [data-theme="dark"]{
-            --bg: #1a1a2e;
-            --surface: #2D2D44;
-            --surface-secondary: #3D3D5C;
-            --text: #E8E8E8;
-            --text-light: #A0A0B8;
-            --border: #3D3D5C;
-            --shadow: 0 8px 32px rgba(0,0,0,0.2);
-            --shadow-lg: 0 16px 48px rgba(0,0,0,0.3);
+            --bg: #1a1a2e; --surface: #2D2D44; --surface-secondary: #3D3D5C;
+            --text: #E8E8E8; --text-light: #A0A0B8; --border: #3D3D5C;
+            --shadow: 0 8px 32px rgba(0,0,0,0.2); --shadow-lg: 0 16px 48px rgba(0,0,0,0.3);
         }
         body{
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            min-height: 100vh;
-            color: var(--text);
-            transition: background 0.3s ease, color 0.3s ease;
-            line-height: 1.5;
+            background: var(--bg); min-height: 100vh; color: var(--text);
+            transition: background 0.3s ease, color 0.3s ease; line-height: 1.5;
         }
         body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(135deg, rgba(255,182,193,0.08) 0%, rgba(128,203,196,0.08) 25%, rgba(255,218,193,0.08) 50%, rgba(128,203,196,0.08) 75%, rgba(255,182,193,0.08) 100%);
-            background-size: 200% 200%;
-            animation: gradientShift 12s ease infinite;
-            pointer-events: none;
-            z-index: -1;
+            background-size: 200% 200%; animation: gradientShift 12s ease infinite;
+            pointer-events: none; z-index: -1;
         }
-        @keyframes gradientShift {
-            0%,100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        /* === КОНТЕЙНЕР === */
+        @keyframes gradientShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         .container{max-width:600px;margin:0 auto;padding:16px;padding-bottom:80px}
         
         /* === HEADER === */
-        .header{
-            display:flex;justify-content:space-between;align-items:center;
-            padding:12px 0;margin-bottom:20px;
-        }
-        .logo{
-            font-size:22px;font-weight:700;
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            -webkit-background-clip:text;background-clip:text;color:transparent;
-            animation:shimmer 4s ease infinite;
-        }
+        .header{display:flex;justify-content:space-between;align-items:center;padding:12px 0;margin-bottom:20px}
+        .logo{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 4s ease infinite}
         @keyframes shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-        
         .user-actions{display:flex;align-items:center;gap:12px}
-        .avatar-btn{
-            width:44px;height:44px;border-radius:50%;
-            background:linear-gradient(135deg,var(--primary-light),var(--secondary));
-            display:flex;align-items:center;justify-content:center;
-            cursor:pointer;border:2px solid var(--surface);
-            box-shadow:var(--shadow);transition:all 0.3s ease;font-size:20px;
-        }
+        .avatar-btn{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary-light),var(--secondary));display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--surface);box-shadow:var(--shadow);transition:all 0.3s ease;font-size:20px}
         .avatar-btn:hover{transform:scale(1.05);box-shadow:var(--shadow-lg)}
         .theme-toggle{position:relative;width:52px;height:28px}
         .theme-toggle input{opacity:0;width:0;height:0}
-        .slider{
-            position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
-            background:var(--surface-secondary);border-radius:28px;
-            transition:0.3s;border:1px solid var(--border);
-        }
-        .slider:before{
-            position:absolute;content:"";height:22px;width:22px;left:3px;bottom:3px;
-            background:var(--primary);border-radius:50%;transition:0.3s;
-        }
+        .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--surface-secondary);border-radius:28px;transition:0.3s;border:1px solid var(--border)}
+        .slider:before{position:absolute;content:"";height:22px;width:22px;left:3px;bottom:3px;background:var(--primary);border-radius:50%;transition:0.3s}
         input:checked + .slider{background:var(--primary-dark)}
         input:checked + .slider:before{transform:translateX(24px);background:white}
 
         /* === NAVIGATION === */
-        .nav{
-            display:flex;gap:8px;margin-bottom:24px;
-            background:var(--surface);padding:6px;border-radius:60px;
-            box-shadow:var(--shadow);position:relative;overflow:hidden;
-        }
-        .nav-btn{
-            flex:1;background:transparent;border:none;padding:12px 8px;
-            border-radius:50px;font-size:13px;font-weight:500;
-            color:var(--text-light);cursor:pointer;transition:all 0.3s ease;z-index:1;
-        }
-        .nav-btn.active{
-            background:linear-gradient(135deg,var(--primary-light),var(--primary));
-            color:white;box-shadow:0 4px 15px rgba(255,154,174,0.3);
-        }
+        .nav{display:flex;gap:8px;margin-bottom:24px;background:var(--surface);padding:6px;border-radius:60px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+        .nav-btn{flex:1;background:transparent;border:none;padding:12px 8px;border-radius:50px;font-size:13px;font-weight:500;color:var(--text-light);cursor:pointer;transition:all 0.3s ease;z-index:1}
+        .nav-btn.active{background:linear-gradient(135deg,var(--primary-light),var(--primary));color:white;box-shadow:0 4px 15px rgba(255,154,174,0.3)}
 
         /* === CARDS & ITEMS === */
-        .card{
-            background:var(--surface);border-radius:var(--radius-lg);
-            padding:20px;box-shadow:var(--shadow);transition:all 0.3s ease;
-            position:relative;overflow:hidden;margin-bottom:16px;
-        }
+        .card{background:var(--surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);transition:all 0.3s ease;position:relative;overflow:hidden;margin-bottom:16px}
         .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-        .card::after{
-            content:'';position:absolute;top:0;left:0;right:0;height:2px;
-            background:linear-gradient(90deg,var(--primary),var(--secondary),var(--primary));
-            transform:translateX(-100%);transition:transform 0.5s ease;
-        }
+        .card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),var(--secondary),var(--primary));transform:translateX(-100%);transition:transform 0.5s ease}
         .card:hover::after{transform:translateX(0)}
-        
         .section-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:16px}
-        
-        .item{
-            display:flex;align-items:center;gap:12px;padding:14px 16px;
-            background:var(--surface-secondary);border-radius:var(--radius-md);
-            margin-bottom:8px;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
-        }
-        .item:hover{
-            transform:translateX(6px);
-            background:linear-gradient(90deg,var(--surface-secondary),rgba(255,182,193,0.15));
-        }
-        .item-checkbox{
-            width:22px;height:22px;border-radius:50%;
-            border:2px solid var(--primary-light);background:var(--surface);
-            display:flex;align-items:center;justify-content:center;
-            cursor:pointer;transition:all 0.2s ease;flex-shrink:0;
-        }
-        .item-checkbox.checked{
-            background:var(--primary);border-color:var(--primary);color:white;
-            transform:scale(1.1);
-        }
-        .item-content{flex:1;min-width:0}
-        .item-title{font-weight:500;margin-bottom:2px;word-wrap:break-word}
+        .item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface-secondary);border-radius:var(--radius-md);margin-bottom:8px;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
+        .item:hover{transform:translateX(6px);background:linear-gradient(90deg,var(--surface-secondary),rgba(255,182,193,0.15))}
+        .item-checkbox{width:22px;height:22px;border-radius:50%;border:2px solid var(--primary-light);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s ease;flex-shrink:0}
+        .item-checkbox.checked{background:var(--primary);border-color:var(--primary);color:white;transform:scale(1.1)}
+        .item-content{flex:1;min-width:0}.item-title{font-weight:500;margin-bottom:2px;word-wrap:break-word}
         .item-note{font-size:13px;color:var(--text-light);word-wrap:break-word}
         .item-meta{font-size:12px;color:var(--text-light);margin-top:4px}
         .item-actions{display:flex;gap:4px}
-        .btn-icon{
-            background:transparent;border:none;cursor:pointer;font-size:16px;
-            padding:6px;border-radius:50%;transition:all 0.2s ease;
-            color:var(--text-light);
-        }
+        .btn-icon{background:transparent;border:none;cursor:pointer;font-size:16px;padding:6px;border-radius:50%;transition:all 0.2s ease;color:var(--text-light)}
         .btn-icon:hover{background:rgba(229,115,115,0.15);color:#E57373;transform:scale(1.1)}
 
-        /* === BUTTONS === */
-        .btn-primary{
-            width:100%;padding:14px;
-            background:linear-gradient(135deg,var(--primary-light),var(--primary),var(--secondary),var(--primary-light));
-            background-size:300% 300%;border:none;border-radius:60px;
-            color:white;font-weight:600;font-size:15px;cursor:pointer;
-            transition:all 0.3s ease;animation:btnShimmer 4s ease infinite;
-        }
-        @keyframes btnShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(255,154,174,0.4);animation:none}
+        /* === КНОПКИ — УНИВЕРСАЛЬНЫЕ СТИЛИ === */
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:60px;font-weight:500;font-size:14px;cursor:pointer;transition:all 0.2s ease;border:2px solid transparent;text-decoration:none}
+        .btn:disabled{opacity:0.6;cursor:not-allowed;transform:none!important}
         
-        .btn-secondary{
-            width:100%;padding:14px;background:transparent;
-            border:2px solid var(--primary-light);border-radius:60px;
-            color:var(--primary);font-weight:600;cursor:pointer;
-            transition:all 0.3s ease;
-        }
-        .btn-secondary:hover{
-            background:linear-gradient(135deg,var(--primary-light),var(--primary));
-            color:white;transform:translateY(-2px);
-        }
-        .btn-danger{border-color:#E57373;color:#E57373}
-        .btn-danger:hover{background:#E57373;color:white}
-        .btn-floating{
-            position:fixed;bottom:24px;right:24px;width:56px;height:56px;
-            border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));
-            color:white;border:none;font-size:24px;cursor:pointer;
-            box-shadow:0 8px 25px rgba(255,154,174,0.5);
-            transition:all 0.3s ease;z-index:100;
-        }
+        .btn-primary{background:linear-gradient(135deg,var(--primary-light),var(--primary));color:white;border-color:var(--primary)}
+        .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,154,174,0.4)}
+        
+        .btn-secondary{background:transparent;color:var(--primary);border-color:var(--primary-light)}
+        .btn-secondary:hover:not(:disabled){background:linear-gradient(135deg,var(--primary-light),var(--primary));color:white}
+        
+        .btn-danger{background:transparent;color:#E57373;border-color:#FFCDD2}
+        .btn-danger:hover:not(:disabled){background:#E57373;color:white}
+        
+        .btn-ghost{background:transparent;color:var(--text-light);border-color:var(--border)}
+        .btn-ghost:hover:not(:disabled){background:var(--surface-secondary);color:var(--text)}
+        
+        .btn-sm{padding:6px 14px;font-size:13px;border-radius:50px}
+        .btn-lg{padding:14px 24px;font-size:16px;border-radius:60px}
+        .btn-full{width:100%}
+        
+        .btn-floating{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;font-size:24px;cursor:pointer;box-shadow:0 8px 25px rgba(255,154,174,0.5);transition:all 0.3s ease;z-index:100}
         .btn-floating:hover{transform:scale(1.1) rotate(5deg);box-shadow:0 12px 35px rgba(255,154,174,0.7)}
 
-        /* === AUTH SECTION === */
-        #auth-root{
-            min-height:100vh;display:flex;align-items:center;justify-content:center;
-            padding:20px;background:transparent;
-        }
-        .auth-card{
-            max-width:400px;width:100%;padding:28px 24px;
-            border-radius:var(--radius-lg);background:var(--surface);
-            box-shadow:var(--shadow-lg);text-align:center;
-        }
-        .auth-title{font-size:24px;font-weight:700;margin-bottom:8px;
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            -webkit-background-clip:text;background-clip:text;color:transparent;}
+        /* === AUTH === */
+        #auth-root{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:transparent}
+        .auth-card{max-width:400px;width:100%;padding:28px 24px;border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow-lg);text-align:center}
+        .auth-title{font-size:24px;font-weight:700;margin-bottom:8px;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent}
         .auth-subtitle{color:var(--text-light);margin-bottom:24px;font-size:14px}
         .auth-tabs{display:flex;gap:8px;margin-bottom:20px}
-        .tab-btn{
-            flex:1;padding:12px;border:2px solid var(--border);
-            background:var(--surface);border-radius:60px;
-            cursor:pointer;font-weight:500;transition:all 0.3s ease;
-        }
-        .tab-btn.active{
-            background:linear-gradient(135deg,var(--primary-light),var(--primary));
-            color:white;border-color:transparent;
-        }
-        .auth-input{
-            width:100%;padding:14px 18px;border:2px solid var(--border);
-            border-radius:60px;font-size:15px;margin-bottom:12px;
-            background:var(--surface);color:var(--text);
-            transition:all 0.3s ease;
-        }
-        .auth-input:focus{
-            outline:none;border-color:var(--primary-light);
-            box-shadow:0 0 0 4px rgba(255,182,193,0.2);transform:translateY(-1px);
-        }
-        .auth-message{
-            margin-top:16px;padding:12px;border-radius:var(--radius-sm);
-            font-weight:500;font-size:14px;
-        }
+        .tab-btn{flex:1;padding:12px;border:2px solid var(--border);background:var(--surface);border-radius:60px;cursor:pointer;font-weight:500;transition:all 0.3s ease}
+        .tab-btn.active{background:linear-gradient(135deg,var(--primary-light),var(--primary));color:white;border-color:transparent}
+        .auth-input{width:100%;padding:14px 18px;border:2px solid var(--border);border-radius:60px;font-size:15px;margin-bottom:12px;background:var(--surface);color:var(--text);transition:all 0.3s ease}
+        .auth-input:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 4px rgba(255,182,193,0.2);transform:translateY(-1px)}
+        .auth-message{margin-top:16px;padding:12px;border-radius:var(--radius-sm);font-weight:500;font-size:14px}
         .auth-message.success{background:rgba(128,203,196,0.15);color:#2E7D32}
         .auth-message.error{background:rgba(229,115,115,0.15);color:#C62828}
 
         /* === MODALS === */
-        .modal,.confirm-modal{
-            display:none;position:fixed;top:0;left:0;right:0;bottom:0;
-            background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);
-            z-index:1000;justify-content:center;align-items:center;
-        }
+        .modal,.confirm-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1000;justify-content:center;align-items:center}
         .modal.active,.confirm-modal.active{display:flex}
-        .modal-content,.confirm-content{
-            background:var(--surface);border-radius:40px;padding:24px;
-            width:90%;max-width:380px;animation:modalSlide 0.4s cubic-bezier(0.4,0,0.2,1);
-            position:relative;overflow:hidden;
-        }
+        .modal-content,.confirm-content{background:var(--surface);border-radius:40px;padding:24px;width:90%;max-width:380px;animation:modalSlide 0.4s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}
         .confirm-content{text-align:center}
-        .modal-content::before,.confirm-content::before{
-            content:'';position:absolute;top:0;left:0;right:0;height:3px;
-            background:linear-gradient(90deg,var(--primary),var(--secondary),var(--primary));
-        }
+        .modal-content::before,.confirm-content::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--secondary),var(--primary))}
         @keyframes modalSlide{from{opacity:0;transform:translateY(25px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-        .modal-title{
-            font-size:20px;font-weight:600;text-align:center;margin-bottom:20px;
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            -webkit-background-clip:text;background-clip:text;color:transparent;
-        }
-        .modal-input,.modal-textarea{
-            width:100%;padding:14px 18px;border:2px solid var(--border);
-            border-radius:60px;font-size:15px;margin-bottom:12px;
-            background:var(--surface);color:var(--text);transition:all 0.3s ease;
-        }
+        .modal-title{font-size:20px;font-weight:600;text-align:center;margin-bottom:20px;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent}
+        .modal-input,.modal-textarea{width:100%;padding:14px 18px;border:2px solid var(--border);border-radius:60px;font-size:15px;margin-bottom:12px;background:var(--surface);color:var(--text);transition:all 0.3s ease}
         .modal-textarea{border-radius:24px;resize:vertical}
-        .modal-input:focus,.modal-textarea:focus{
-            outline:none;border-color:var(--primary-light);
-            box-shadow:0 0 0 4px rgba(255,182,193,0.2);
-        }
+        .modal-input:focus,.modal-textarea:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 4px rgba(255,182,193,0.2)}
         .modal-buttons{display:flex;gap:10px;margin-top:16px}
-        .modal-buttons .btn-primary,.modal-buttons .btn-secondary{padding:12px;font-size:14px}
-        
+        .modal-buttons .btn{padding:12px;font-size:14px;flex:1}
         .confirm-icon{font-size:44px;margin-bottom:12px}
         .confirm-text{font-size:16px;margin-bottom:6px;font-weight:500}
         .confirm-subtext{font-size:13px;color:var(--text-light);margin-bottom:20px}
         .confirm-buttons{display:flex;gap:10px}
-        .confirm-buttons button{flex:1;padding:12px;border-radius:60px;font-weight:600;cursor:pointer;transition:all 0.3s ease}
+        .confirm-buttons .btn{padding:12px}
 
-        /* === TOAST === */
-        .toast{
-            position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);
-            background:var(--surface);border-radius:60px;padding:12px 24px;
-            display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);
-            z-index:1100;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);
-            font-weight:500;border-left:3px solid var(--primary);
-        }
+        /* === TOAST & EMPTY === */
+        .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);border-radius:60px;padding:12px 24px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);z-index:1100;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);font-weight:500;border-left:3px solid var(--primary)}
         .toast.show{transform:translateX(-50%) translateY(0)}
-
-        /* === EMPTY STATE === */
         .empty-state{text-align:center;padding:40px 20px;color:var(--text-light)}
         .empty-icon{font-size:48px;margin-bottom:12px;animation:float 3s ease infinite}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         .empty-text{font-size:14px}
 
-        /* === PROFILE MODAL === */
+        /* === PROFILE === */
         .avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-        .avatar-option{
-            font-size:28px;padding:10px;text-align:center;border-radius:50%;
-            background:var(--surface-secondary);cursor:pointer;transition:all 0.3s ease;
-        }
-        .avatar-option:hover,.avatar-option.selected{
-            background:linear-gradient(135deg,var(--primary-light),var(--primary));
-            transform:scale(1.1);box-shadow:0 0 15px rgba(255,154,174,0.4);
-        }
+        .avatar-option{font-size:28px;padding:10px;text-align:center;border-radius:50%;background:var(--surface-secondary);cursor:pointer;transition:all 0.3s ease}
+        .avatar-option:hover,.avatar-option.selected{background:linear-gradient(135deg,var(--primary-light),var(--primary));transform:scale(1.1);box-shadow:0 0 15px rgba(255,154,174,0.4)}
         .theme-options{display:flex;gap:10px;margin:16px 0}
-        .theme-btn{
-            flex:1;padding:10px;border-radius:60px;border:2px solid var(--border);
-            background:var(--surface);cursor:pointer;transition:all 0.3s ease;font-size:13px;
-        }
-        .theme-btn.active{
-            background:linear-gradient(135deg,var(--primary-light),var(--primary));
-            color:white;border-color:transparent;
-        }
+        .theme-btn{flex:1;padding:10px;border-radius:60px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:all 0.3s ease;font-size:13px}
+        .theme-btn.active{background:linear-gradient(135deg,var(--primary-light),var(--primary));color:white;border-color:transparent}
 
-        /* === MODULE SPECIFIC OVERRIDES === */
-        /* Для совместимости с tasks.css, notes.css, tracker.css */
+        /* === 🌸 КАЛЕНДАРЬ НАСТРОЕНИЯ === */
+        .calendar-card{background:var(--surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow)}
+        .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        .calendar-month{font-size:18px;font-weight:600;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent}
+        .cal-nav-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all 0.2s ease;font-size:14px;color:var(--text)}
+        .cal-nav-btn:hover{background:var(--surface-secondary);transform:scale(1.05)}
+        
+        .calendar-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:8px;font-size:11px;font-weight:500;color:var(--text-light);text-transform:uppercase}
+        .calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+        
+        .cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:16px;cursor:pointer;transition:all 0.2s ease;background:var(--surface-secondary);position:relative;font-size:13px;font-weight:500;color:var(--text);min-height:36px}
+        .cal-day:hover{background:linear-gradient(135deg,var(--primary-light),var(--secondary));color:white;transform:scale(1.05)}
+        .cal-day.today{background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;box-shadow:0 0 0 2px var(--surface), 0 4px 12px rgba(255,154,174,0.3)}
+        .cal-day.has-mood{background:linear-gradient(135deg,var(--primary-light),var(--secondary));color:white}
+        .cal-day .day-mood{font-size:14px;margin-top:2px;line-height:1}
+        .cal-day.other-month{color:var(--text-light);opacity:0.5}
+        .cal-day.other-month:hover{opacity:1}
+        
+        .mood-selector{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0}
+        .mood-option{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:20px;background:var(--surface-secondary);cursor:pointer;transition:all 0.2s ease;font-size:12px;color:var(--text)}
+        .mood-option:hover{background:linear-gradient(135deg,var(--primary-light),var(--secondary));color:white;transform:scale(1.05)}
+        .mood-option.selected{background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;box-shadow:0 4px 12px rgba(255,154,174,0.4)}
+        .mood-emoji{font-size:20px}
+        
+        .mood-note{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:20px;font-size:14px;background:var(--surface);color:var(--text);resize:vertical;min-height:80px;margin:8px 0;transition:all 0.2s ease}
+        .mood-note:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(255,182,193,0.2)}
+        
+        .mood-history{margin-top:20px}
+        .mood-entry{display:flex;gap:12px;padding:12px;background:var(--surface-secondary);border-radius:20px;margin-bottom:8px;align-items:flex-start}
+        .mood-entry-date{font-size:12px;color:var(--text-light);min-width:50px}
+        .mood-entry-content{flex:1}
+        .mood-entry-emoji{font-size:20px;margin-right:6px}
+        .mood-entry-note{font-size:13px;color:var(--text);margin-top:4px}
+        .mood-entry-actions{display:flex;gap:4px}
+
+        /* === MODULE OVERRIDES === */
         #main-container .card { margin-bottom: 16px; }
         #main-container .btn-primary { width: auto; padding: 10px 20px; font-size: 14px; }
         #main-container input, #main-container textarea {
@@ -357,6 +220,7 @@
         <button data-route="tasks" class="nav-btn active">📝 Планы</button>
         <button data-route="notes" class="nav-btn">📔 Заметки</button>
         <button data-route="tracker" class="nav-btn">📊 Прогресс</button>
+        <button data-route="mood" class="nav-btn">😊 Настроение</button>
     </nav>
 
     <!-- Main Content -->
@@ -367,19 +231,16 @@
                 <div class="empty-icon" style="font-size:48px;margin-bottom:12px">🌸</div>
                 <h2 class="auth-title">Добро пожаловать</h2>
                 <p class="auth-subtitle">Войди или создай аккаунт</p>
-                
                 <div class="auth-tabs">
                     <button class="tab-btn active" id="tab-login">Вход</button>
                     <button class="tab-btn" id="tab-register">Регистрация</button>
                 </div>
-                
                 <form id="auth-form">
                     <input type="email" id="auth-email" class="auth-input" placeholder="Email" required>
                     <input type="password" id="auth-password" class="auth-input" placeholder="Пароль" minlength="6" required>
                     <input type="text" id="auth-username" class="auth-input" placeholder="Имя" style="display:none">
-                    <button type="submit" id="auth-submit" class="btn-primary">Войти</button>
+                    <button type="submit" id="auth-submit" class="btn btn-primary btn-full">Войти</button>
                 </form>
-                
                 <div id="auth-message" class="auth-message" style="display:none"></div>
             </div>
         </div>
@@ -396,20 +257,20 @@
         <div class="confirm-text" id="confirmMessage">Удалить?</div>
         <div class="confirm-subtext" id="confirmSubtext">Это действие нельзя отменить</div>
         <div class="confirm-buttons">
-            <button class="btn-secondary" id="confirmCancelBtn">Отмена</button>
-            <button class="btn-danger" id="confirmOkBtn">Удалить</button>
+            <button class="btn btn-secondary" id="confirmCancelBtn">Отмена</button>
+            <button class="btn btn-danger" id="confirmOkBtn">Удалить</button>
         </div>
     </div>
 </div>
 
-<!-- Generic Modal for modules -->
+<!-- Generic Modal -->
 <div id="moduleModal" class="modal">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">Новый элемент</div>
         <div id="modalBody"></div>
         <div class="modal-buttons">
-            <button class="btn-secondary" id="modalCancelBtn">Отмена</button>
-            <button class="btn-primary" id="modalSaveBtn">Сохранить</button>
+            <button class="btn btn-secondary" id="modalCancelBtn">Отмена</button>
+            <button class="btn btn-primary" id="modalSaveBtn">Сохранить</button>
         </div>
     </div>
 </div>
@@ -430,9 +291,32 @@
                 <button class="theme-btn" data-theme="dark">🌙 Тёмная</button>
             </div>
         </div>
-        <button class="btn-primary" id="saveProfileBtn">Сохранить</button>
-        <button class="btn-secondary" id="closeProfileBtn" style="margin-top:8px">Отмена</button>
-        <button class="btn-secondary" id="logoutProfileBtn" style="margin-top:8px;border-color:#FFCDD2;color:#E57373">Выйти</button>
+        <button class="btn btn-primary btn-full" id="saveProfileBtn">Сохранить</button>
+        <button class="btn btn-secondary btn-full" id="closeProfileBtn" style="margin-top:8px">Отмена</button>
+        <button class="btn btn-danger btn-full" id="logoutProfileBtn" style="margin-top:8px">Выйти</button>
+    </div>
+</div>
+
+<!-- 🌸 Mood Modal -->
+<div id="moodModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">😊 Как твоё настроение?</div>
+        <div id="moodModalDate" style="text-align:center;font-size:14px;color:var(--text-light);margin-bottom:12px"></div>
+        
+        <div class="mood-selector" id="moodSelector">
+            <div class="mood-option" data-mood="amazing"><span class="mood-emoji">😍</span><span>Восторг</span></div>
+            <div class="mood-option" data-mood="good"><span class="mood-emoji">😊</span><span>Хорошо</span></div>
+            <div class="mood-option" data-mood="neutral"><span class="mood-emoji">😐</span><span>Норм</span></div>
+            <div class="mood-option" data-mood="sad"><span class="mood-emoji">😔</span><span>Грустно</span></div>
+            <div class="mood-option" data-mood="terrible"><span class="mood-emoji">😭</span><span>Плохо</span></div>
+        </div>
+        
+        <textarea id="moodNote" class="mood-note" placeholder="Что случилось? (необязательно)"></textarea>
+        
+        <div class="modal-buttons">
+            <button class="btn btn-secondary" id="closeMoodBtn">Отмена</button>
+            <button class="btn btn-primary" id="saveMoodBtn">Сохранить</button>
+        </div>
     </div>
 </div>
 
@@ -667,6 +551,168 @@ window.showModuleModal = function(title, contentHtml, onSave) {
         document.getElementById('modalCancelBtn').onclick = onCancel;
     });
 };
+// === 🌸 КАЛЕНДАРЬ НАСТРОЕНИЯ ===
+let moodCalendar = { currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear(), selectedDate: null, selectedMood: null, moods: JSON.parse(localStorage.getItem('userMoods')||'{}') };
+
+function renderCalendar(){
+    const container = document.getElementById('main-container');
+    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    const dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    
+    const firstDay = new Date(moodCalendar.currentYear, moodCalendar.currentMonth, 1);
+    const lastDay = new Date(moodCalendar.currentYear, moodCalendar.currentMonth+1, 0);
+    const startDay = (firstDay.getDay()||7)-1;
+    const daysInMonth = lastDay.getDate();
+    
+    let html = `
+        <div class="calendar-card">
+            <div class="calendar-header">
+                <button class="cal-nav-btn" id="calPrev">◀</button>
+                <span class="calendar-month">${monthNames[moodCalendar.currentMonth]} ${moodCalendar.currentYear}</span>
+                <button class="cal-nav-btn" id="calNext">▶</button>
+            </div>
+            <div class="calendar-weekdays">${dayNames.map(d=>`<span>${d}</span>`).join('')}</div>
+            <div class="calendar-days" id="calendarDays"></div>
+        </div>
+        <div class="mood-history" id="moodHistory"></div>
+    `;
+    container.innerHTML = html;
+    
+    const daysContainer = document.getElementById('calendarDays');
+    let daysHTML = '';
+    
+    // Пустые ячейки до первого дня
+    for(let i=0;i<startDay;i++) daysHTML += `<div class="cal-day other-month"></div>`;
+    
+    // Дни месяца
+    const today = new Date();
+    for(let d=1; d<=daysInMonth; d++){
+        const dateKey = `${moodCalendar.currentYear}-${String(moodCalendar.currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const mood = moodCalendar.moods[dateKey];
+        const isToday = today.getDate()===d && today.getMonth()===moodCalendar.currentMonth && today.getFullYear()===moodCalendar.currentYear;
+        daysHTML += `<div class="cal-day ${isToday?'today':''} ${mood?'has-mood':''}" data-date="${dateKey}">
+            <span>${d}</span>
+            ${mood?`<span class="day-mood">${getMoodEmoji(mood)}</span>`:''}
+        </div>`;
+    }
+    daysContainer.innerHTML = daysHTML;
+    
+    // Навигация
+    document.getElementById('calPrev').onclick = () => { 
+        if(moodCalendar.currentMonth===0){ moodCalendar.currentMonth=11; moodCalendar.currentYear--; } 
+        else moodCalendar.currentMonth--; 
+        renderCalendar(); renderMoodHistory(); 
+    };
+    document.getElementById('calNext').onclick = () => { 
+        if(moodCalendar.currentMonth===11){ moodCalendar.currentMonth=0; moodCalendar.currentYear++; } 
+        else moodCalendar.currentMonth++; 
+        renderCalendar(); renderMoodHistory(); 
+    };
+    
+    // Клик по дню
+    document.querySelectorAll('.cal-day:not(.other-month)').forEach(day=>{
+        day.onclick = () => openMoodModal(day.dataset.date);
+    });
+    
+    renderMoodHistory();
+}
+
+function getMoodEmoji(mood){
+    const map = { amazing:'😍', good:'😊', neutral:'😐', sad:'😔', terrible:'😭' };
+    return map[mood] || '😐';
+}
+
+function openMoodModal(dateKey){
+    moodCalendar.selectedDate = dateKey;
+    moodCalendar.selectedMood = moodCalendar.moods[dateKey]?.mood || null;
+    
+    document.getElementById('moodModalDate').textContent = new Date(dateKey).toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.querySelectorAll('.mood-option').forEach(opt=>{
+        opt.classList.toggle('selected', opt.dataset.mood === moodCalendar.selectedMood);
+    });
+    document.getElementById('moodNote').value = moodCalendar.moods[dateKey]?.note || '';
+    document.getElementById('moodModal').classList.add('active');
+}
+
+document.querySelectorAll('.mood-option').forEach(opt=>{
+    opt.onclick = () => {
+        document.querySelectorAll('.mood-option').forEach(o=>o.classList.remove('selected'));
+        opt.classList.add('selected');
+        moodCalendar.selectedMood = opt.dataset.mood;
+    };
+});
+
+document.getElementById('closeMoodBtn').onclick = () => document.getElementById('moodModal').classList.remove('active');
+document.getElementById('saveMoodBtn').onclick = () => {
+    if(moodCalendar.selectedDate && moodCalendar.selectedMood){
+        moodCalendar.moods[moodCalendar.selectedDate] = {
+            mood: moodCalendar.selectedMood,
+            note: document.getElementById('moodNote').value.trim(),
+            timestamp: Date.now()
+        };
+        localStorage.setItem('userMoods', JSON.stringify(moodCalendar.moods));
+        showToast('Настроение сохранено ✨');
+        document.getElementById('moodModal').classList.remove('active');
+        renderCalendar();
+    }
+};
+
+function renderMoodHistory(){
+    const container = document.getElementById('moodHistory');
+    const entries = Object.entries(moodCalendar.moods)
+        .filter(([date]) => date.startsWith(`${moodCalendar.currentYear}-${String(moodCalendar.currentMonth+1).padStart(2,'0')}`))
+        .sort((a,b)=>b[0].localeCompare(a[0]))
+        .slice(0,10);
+    
+    if(entries.length===0){ container.innerHTML = '<div class="empty-state"><div class="empty-icon">🌸</div><div class="empty-text">Пока нет записей. Отметь настроение!</div></div>'; return; }
+    
+    container.innerHTML = `<div class="section-title">📜 Записи месяца</div>` + entries.map(([date,data])=>`
+        <div class="mood-entry">
+            <div class="mood-entry-date">${new Date(date).getDate()}</div>
+            <div class="mood-entry-content">
+                <div><span class="mood-entry-emoji">${getMoodEmoji(data.mood)}</span><strong>${data.note||'Без заметки'}</strong></div>
+                ${data.note?`<div class="mood-entry-note">${data.note}</div>`:''}
+            </div>
+            <div class="mood-entry-actions">
+                <button class="btn-icon" onclick="editMood('${date}')" title="Редактировать">✏️</button>
+                <button class="btn-icon" onclick="deleteMood('${date}')" title="Удалить">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.editMood = (date) => openMoodModal(date);
+window.deleteMood = async (date) => {
+    if(await confirmDialog('Удалить запись?')){
+        delete moodCalendar.moods[date];
+        localStorage.setItem('userMoods', JSON.stringify(moodCalendar.moods));
+        showToast('Запись удалена');
+        renderCalendar();
+    }
+};
+
+// === ROUTING + MOOD MODULE ===
+const originalInit = window.Router?.init;
+if(window.Router){
+    window.Router.init = function(){
+        if(originalInit) originalInit.call(window.Router);
+        document.querySelectorAll('.nav-btn').forEach(btn=>{
+            btn.onclick = async () => {
+                document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                const route = btn.dataset.route;
+                if(route === 'mood'){ 
+                    document.getElementById('fab').style.display = 'none';
+                    renderCalendar(); 
+                } else {
+                    document.getElementById('fab').style.display = 'flex';
+                    await window.Core?.loadModule?.(route);
+                }
+            };
+        });
+    };
+}
+
 
 // === FAB BUTTON ===
 document.getElementById('fab').onclick = async () => {
