@@ -16,7 +16,7 @@ app.use((req, res, next) => {
   else next();
 });
 
-app.options('*', cors());
+app.options(cors());
 
 app.use(bodyParser.json({ limit: '10mb' }));
 
