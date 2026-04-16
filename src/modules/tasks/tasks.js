@@ -9,8 +9,14 @@ class TasksModule {
   async init() { this.save(); }
 
   render(container) {
-    this.container = container;
-    const completed = this.tasks.filter(t => t.done).length;
+if (!container) {
+    container = document.getElementById('main-container');
+  }
+  if (!container) {
+    console.warn('⚠️ Контейнер для рендера не найден');
+    return;
+  }
+  this.container = container;    const completed = this.tasks.filter(t => t.done).length;
     
     container.innerHTML = `
       <div class="card">

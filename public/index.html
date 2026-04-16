@@ -548,6 +548,113 @@
     }
   };
 </script>
+<!-- === CORE SYSTEM (вставьте после определения глобальных функций, ПЕРЕД модулями) === -->
+<script>
+/**
+ * 🌸 Core System — загрузчик модулей для "Нежного дневника"
+ */
+(function() {
+  // Создаём Core если нет
+  window.Core = window.Core || {
+    modules: {},
+    container: null,
+    currentModule: null,
+    
+    // Регистрация модуля
+    registerModule: function(name, instance) {
+      this.modules[name] = instance;
+      console.log(`📦 Модуль "${name}" зарегистрирован`);
+    },
+    
+    // Инициализация системы
+    init: async function() {
+      this.container = document.getElementById('main-container');
+      if (!this.container) {
+        console.error('❌ Контейнер #main-container не найден');
+        return;
+      }
+      console.log('✨ Core initialized');
+    },
+    
+    // Загрузка модуля
+    loadModule: async function(name) {
+      const module = this.modules[name];
+      
+      if (!module) {
+        console.warn(`⚠️ Модуль "${name}" не найден`);
+        // Показываем заглушку
+        if (this.container) {
+          this.container.innerHTML = `
+            <div class="card">
+              <div class="empty-state" style="padding:40px 20px">
+                <div class="empty-icon" style="font-size:48px;margin-bottom:12px">🔧</div>
+                <p class="empty-text">Модуль "${name}" пока не подключен</p>
+              </div>
+            </div>
+          `;
+        }
+        return;
+      }
+      
+      // Скрываем старые элементы модулей если есть
+      document.querySelectorAll('.module-content')?.forEach(el => {
+        el.style.display = 'none';
+      });
+      
+      // Создаём или находим контейнер для модуля
+      let moduleContainer = document.getElementById(`module-${name}`);
+      if (!moduleContainer) {
+        moduleContainer = document.createElement('div');
+        moduleContainer.id = `module-${name}`;
+        moduleContainer.className = 'module-content';
+        this.container.appendChild(moduleContainer);
+      }
+      
+      // Показываем нужный контейнер, скрываем остальные
+      document.querySelectorAll('.module-content')?.forEach(el => {
+        el.style.display = el.id === `module-${name}` ? 'block' : 'none';
+      });
+      
+      // Рендерим модуль
+      try {
+        if (typeof module.render === 'function') {
+          module.render(moduleContainer);
+        }
+        if (typeof module.init === 'function') {
+          await module.init();
+        }
+        this.currentModule = name;
+        console.log(`✅ Модуль "${name}" загружен`);
+      } catch (err) {
+        console.error(`❌ Ошибка загрузки модуля "${name}":`, err);
+        moduleContainer.innerHTML = `
+          <div class="card">
+            <div class="empty-state" style="padding:40px 20px">
+              <div class="empty-icon" style="font-size:48px;margin-bottom:12px">⚠️</div>
+              <p class="empty-text">Ошибка загрузки модуля</p>
+              <p style="font-size:12px;color:var(--text-light);margin-top:8px">${err.message}</p>
+            </div>
+          </div>
+        `;
+      }
+    },
+    
+    // Получить активный модуль
+    getActiveModule: function() {
+      return this.modules[this.currentModule] || null;
+    },
+    
+    // Обновить текущий модуль (перерендер)
+    refresh: async function() {
+      if (this.currentModule) {
+        await this.loadModule(this.currentModule);
+      }
+    }
+  };
+  
+  console.log('🌸 Core System loaded');
+})();
+</script>
 <!-- SYSTEM SCRIPTS - НЕ МЕНЯЕМ ПОРЯДОК И ПУТИ -->
 <!-- === CORE MODULES === -->
 <script src="/src/core/router.js"></script>
@@ -563,7 +670,91 @@
 <script src="/src/modules/notes/notesUI.js"></script>
 <script src="/src/modules/tracker/tracker.js"></script>
 <script src="/src/modules/tracker/trackerUI.js"></script>
+<!-- В index.html замените: -->
+<!-- <script type="module" src="/src/main.js"></script> -->
+<!-- на: -->
 
+<script>
+/**
+ * 🌸 Main App Initialization
+ */
+async function initApp() {
+  console.log('🚀 Нежный дневник запускается...');
+  
+  // Ждём загрузки всех скриптов
+  await new Promise(resolve => {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', resolve);
+    } else {
+      resolve();
+    }
+  });
+  
+  // Проверяем авторизацию
+  const savedUser = sessionStorage.getItem('authUser');
+  
+  if (savedUser) {
+    // Пользователь авторизован — показываем приложение
+    window.currentUser = JSON.parse(savedUser);
+    showAppInterface();
+    await startApp();
+  } else {
+    // Показываем экран авторизации
+    showAuthInterface();
+  }
+  
+  // Глобальная функция для перехода в приложение после логина
+  window.appReady = async function() {
+    await startApp();
+  };
+}
+
+async function startApp() {
+  // Инициализируем Core
+  await window.Core?.init?.();
+  
+  // Инициализируем роутер
+  if (window.Router?.init) {
+    window.Router.init();
+  }
+  
+  // Загружаем модуль по умолчанию
+  const defaultRoute = 'tasks';
+  if (window.Router?.navigate) {
+    await window.Router.navigate(defaultRoute);
+  } else if (window.Core?.loadModule) {
+    await window.Core.loadModule(defaultRoute);
+  }
+  
+  console.log('✨ Приложение готово 🌸');
+}
+
+function showAppInterface() {
+  document.getElementById('auth-root').style.display = 'none';
+  document.getElementById('app-header').style.display = 'flex';
+  document.getElementById('app-nav').style.display = 'flex';
+  document.getElementById('fab').style.display = 'flex';
+  
+  // Обновляем аватар
+  const user = window.currentUser;
+  if (user?.username) {
+    const avatar = user.username[0]?.toUpperCase() || '🌸';
+    document.getElementById('userAvatar').textContent = avatar;
+    document.getElementById('profileAvatar').textContent = avatar;
+    document.getElementById('profileName').value = user.username;
+  }
+}
+
+function showAuthInterface() {
+  document.getElementById('auth-root').style.display = 'flex';
+  document.getElementById('app-header').style.display = 'none';
+  document.getElementById('app-nav').style.display = 'none';
+  document.getElementById('fab').style.display = 'none';
+}
+
+// Запускаем
+initApp();
+</script>
 <!-- === APP LOGIC === -->
 <script>
 // === THEME MANAGEMENT ===

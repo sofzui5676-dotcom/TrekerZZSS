@@ -50,8 +50,14 @@ class TrackerModule {
   }
 
   render(container) {
-    this.container = container;
-    const entry = this.entries[this.selectedDate] || {};
+if (!container) {
+    container = document.getElementById('main-container');
+  }
+  if (!container) {
+    console.warn('⚠️ Контейнер для рендера не найден');
+    return;
+  }
+  this.container = container;    const entry = this.entries[this.selectedDate] || {};
     
     container.innerHTML = `
       <div class="card">

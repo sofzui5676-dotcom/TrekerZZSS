@@ -9,7 +9,14 @@ class NotesModule {
   }
 
   render(container) {
-    this.container = container;
+    if (!container) {
+    container = document.getElementById('main-container');
+  }
+  if (!container) {
+    console.warn('⚠️ Контейнер для рендера не найден');
+    return;
+  }
+  this.container = container;
     container.innerHTML = `
       <div class="card">
         <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
