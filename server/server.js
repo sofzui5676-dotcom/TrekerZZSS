@@ -30,7 +30,7 @@ app.use((req, res, next) => {
 app.use(bodyParser.json({ limit: "10mb" }));
 
 // ✅ Routes
-app.use("/api", authRoutes);
+app.use(authRoutes);
 
 // ✅ 404 handler (без wildcard проблемы)
 app.use((req, res) => {
