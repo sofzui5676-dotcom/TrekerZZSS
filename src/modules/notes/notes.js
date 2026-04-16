@@ -26,7 +26,8 @@ class NotesModule {
         </div>
       </div>
     `;
-    this.bindEvents();
+    // ВАЖНО: привязываем события ПОСЛЕ вставки HTML
+    setTimeout(() => this.bindEvents(), 0);
   }
 
   renderNotesList(filter = '') {
@@ -49,7 +50,7 @@ class NotesModule {
         day: 'numeric', month: 'short', year: 'numeric'
       });
       return `
-        <div class="item" data-index="${originalIndex}" style="cursor:pointer;position:relative">
+        <div class="item" data-index="${originalIndex}" style="cursor:pointer">
           <div class="item-content" style="min-width:0">
             <div class="item-title" style="word-break:break-word">${this.escapeHtml(note.content.substring(0, 80))}${note.content.length > 80 ? '...' : ''}</div>
             <div class="item-meta">${date}</div>
@@ -70,24 +71,28 @@ class NotesModule {
   }
 
   bindEvents() {
-    // Поиск
     const searchInput = document.getElementById('notesSearch');
     if (searchInput) {
       searchInput.oninput = (e) => {
         const grid = document.querySelector('.notes-grid');
         if (grid) grid.innerHTML = this.renderNotesList(e.target.value);
-        document.querySelector('.notes-count').textContent = `(${this.notes.filter(n => 
-          n.content.toLowerCase().includes(e.target.value.toLowerCase())
-        ).length})`;
+        const countEl = document.querySelector('.notes-count');
+        if (countEl) {
+          countEl.textContent = `(${this.notes.filter(n => 
+            n.content.toLowerCase().includes(e.target.value.toLowerCase())
+          ).length})`;
+        }
       };
     }
 
-    // Добавить заметку
-    document.getElementById('addNoteBtn')?.addEventListener('click', () => {
-      this.showEditor();
-    });
+    const addBtn = document.getElementById('addNoteBtn');
+    if (addBtn) {
+      addBtn.onclick = (e) => {
+        e.preventDefault();
+        this.showEditor();
+      };
+    }
 
-    // Делегирование событий для карточек
     document.querySelector('.notes-grid')?.addEventListener('click', (e) => {
       const card = e.target.closest('[data-index]');
       if (!card) return;
@@ -100,41 +105,52 @@ class NotesModule {
         e.stopPropagation();
         this.deleteNote(index);
       } else {
-        // Просмотр полной заметки
         this.viewNote(index);
       }
     });
   }
 
   async showEditor(editIndex = null) {
-    const note = editIndex !== null ? this.notes[editIndex] : null;
+    // Проверка наличия глобальной функции
+    if (typeof window.showModuleModal !== 'function') {
+      console.error('showModuleModal not defined');
+      return;
+    }
     
+    const note = editIndex !== null ? this.notes[editIndex] : null;
     const content = `
       <textarea id="noteEditorContent" class="modal-textarea" rows="6" placeholder="Напиши свою мысль... ✨" style="width:100%;margin:0">${note?.content || ''}</textarea>
     `;
     
-    const saved = await window.showModuleModal(
-      note ? '✏️ Редактировать заметку' : '📝 Новая заметка',
-      content,
-      () => {
-        const content = document.getElementById('noteEditorContent')?.value.trim();
-        if (!content) return;
-        
-        if (editIndex !== null) {
-          this.notes[editIndex].content = content;
-          this.notes[editIndex].updated = new Date().toISOString();
-        } else {
-          this.notes.unshift({
-            content,
-            created: new Date().toISOString(),
-            updated: new Date().toISOString()
-          });
+    try {
+      await window.showModuleModal(
+        note ? '✏️ Редактировать заметку' : '📝 Новая заметка',
+        content,
+        () => {
+          const contentEl = document.getElementById('noteEditorContent');
+          const content = contentEl?.value.trim();
+          if (!content) return;
+          
+          if (editIndex !== null) {
+            this.notes[editIndex].content = content;
+            this.notes[editIndex].updated = new Date().toISOString();
+          } else {
+            this.notes.unshift({
+              content,
+              created: new Date().toISOString(),
+              updated: new Date().toISOString()
+            });
+          }
+          this.save();
+          if (this.container) this.render(this.container);
+          if (typeof window.showToast === 'function') {
+            window.showToast(note ? 'Заметка обновлена ✨' : 'Заметка создана 🌸');
+          }
         }
-        this.save();
-        this.render(this.container);
-        window.showToast(note ? 'Заметка обновлена ✨' : 'Заметка создана 🌸');
-      }
-    );
+      );
+    } catch (err) {
+      console.error('Modal error:', err);
+    }
   }
 
   async viewNote(index) {
@@ -152,7 +168,9 @@ class NotesModule {
       </div>
     `;
     
-    await window.showModuleModal('📔 Заметка', content);
+    if (typeof window.showModuleModal === 'function') {
+      await window.showModuleModal('📔 Заметка', content);
+    }
   }
 
   async editNote(index) {
@@ -160,11 +178,17 @@ class NotesModule {
   }
 
   async deleteNote(index) {
-    const confirmed = await window.confirmDialog('Удалить заметку?', 'Это действие нельзя отменить');
-    if (confirmed) {
-      this.notes.splice(index, 1);
-      this.save();
-      this.render(this.container);
+    if (typeof window.confirmDialog !== 'function') {
+      if (!confirm('Удалить заметку?')) return;
+    } else {
+      const confirmed = await window.confirmDialog('Удалить заметку?', 'Это действие нельзя отменить');
+      if (!confirmed) return;
+    }
+    
+    this.notes.splice(index, 1);
+    this.save();
+    if (this.container) this.render(this.container);
+    if (typeof window.showToast === 'function') {
       window.showToast('Заметка удалена 🗑️');
     }
   }
@@ -172,6 +196,17 @@ class NotesModule {
   save() {
     localStorage.setItem('notes', JSON.stringify(this.notes));
   }
+
+  // Публичный метод для FAB
+  async showAddModal() {
+    await this.showEditor();
+  }
 }
 
-window.Core?.registerModule('notes', new NotesModule());
+// Регистрация только если Core доступен
+if (window.Core?.registerModule) {
+  window.Core.registerModule('notes', new NotesModule());
+} else {
+  // Fallback: сохраняем модуль глобально
+  window.NotesModule = new NotesModule();
+}

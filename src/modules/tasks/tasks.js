@@ -6,9 +6,7 @@ class TasksModule {
     this.editingIndex = null;
   }
 
-  async init() {
-    this.save();
-  }
+  async init() { this.save(); }
 
   render(container) {
     this.container = container;
@@ -30,7 +28,7 @@ class TasksModule {
         </div>
       </div>
     `;
-    this.bindEvents();
+    setTimeout(() => this.bindEvents(), 0);
   }
 
   renderTasksList() {
@@ -43,7 +41,6 @@ class TasksModule {
       `;
     }
 
-    // Сортировка: незавершённые сверху
     const sorted = [...this.tasks].sort((a, b) => {
       if (a.done === b.done) return new Date(b.created) - new Date(a.created);
       return a.done ? 1 : -1;
@@ -51,9 +48,7 @@ class TasksModule {
 
     return sorted.map(task => {
       const index = this.tasks.indexOf(task);
-      const date = new Date(task.created).toLocaleDateString('ru-RU', {
-        day: 'numeric', month: 'short'
-      });
+      const date = new Date(task.created).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
       return `
         <div class="item ${task.done ? 'done' : ''}" data-index="${index}" style="${task.done ? 'opacity:0.7' : ''}">
           <div class="item-checkbox ${task.done ? 'checked' : ''}" data-action="toggle">
@@ -81,13 +76,12 @@ class TasksModule {
   }
 
   bindEvents() {
-    // Добавить задачу
-    document.getElementById('addTaskBtn')?.addEventListener('click', () => {
+    document.getElementById('addTaskBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
       this.editingIndex = null;
       this.showTaskForm();
     });
 
-    // Делегирование событий
     document.querySelector('.tasks-list')?.addEventListener('click', (e) => {
       const item = e.target.closest('[data-index]');
       if (!item) return;
@@ -107,18 +101,26 @@ class TasksModule {
   }
 
   async showTaskForm() {
-    const task = this.editingIndex !== null ? this.tasks[this.editingIndex] : null;
+    if (typeof window.showModuleModal !== 'function') {
+      console.error('showModuleModal not defined');
+      return;
+    }
     
+    const task = this.editingIndex !== null ? this.tasks[this.editingIndex] : null;
     const content = `
       <input type="text" id="taskTitle" class="modal-input" placeholder="Название задачи *" value="${task?.title || ''}" style="width:100%;margin:0;margin-bottom:12px">
       <textarea id="taskDesc" class="modal-textarea" rows="3" placeholder="Описание (необязательно)" style="width:100%;margin:0">${task?.desc || ''}</textarea>
     `;
     
-    await window.showModuleModal(
-      task ? '✏️ Редактировать задачу' : '📝 Новая задача',
-      content,
-      () => this.saveTask()
-    );
+    try {
+      await window.showModuleModal(
+        task ? '✏️ Редактировать задачу' : '📝 Новая задача',
+        content,
+        () => this.saveTask()
+      );
+    } catch (err) {
+      console.error('Modal error:', err);
+    }
   }
 
   saveTask() {
@@ -126,30 +128,28 @@ class TasksModule {
     const desc = document.getElementById('taskDesc')?.value.trim();
     
     if (!title) {
-      window.showToast('Введите название задачи ⚠️', '⚠️');
+      if (typeof window.showToast === 'function') {
+        window.showToast('Введите название задачи ⚠️', '⚠️');
+      }
       return;
     }
 
     if (this.editingIndex !== null) {
-      // Редактирование
       this.tasks[this.editingIndex].title = title;
       this.tasks[this.editingIndex].desc = desc;
       this.tasks[this.editingIndex].updated = new Date().toISOString();
-      window.showToast('Задача обновлена ✨');
+      if (typeof window.showToast === 'function') window.showToast('Задача обновлена ✨');
     } else {
-      // Новая задача
       this.tasks.unshift({
-        title,
-        desc,
-        done: false,
+        title, desc, done: false,
         created: new Date().toISOString(),
         points: 10
       });
-      window.showToast('Задача создана 🌸');
+      if (typeof window.showToast === 'function') window.showToast('Задача создана 🌸');
     }
     
     this.save();
-    this.render(this.container);
+    if (this.container) this.render(this.container);
   }
 
   toggleTask(index) {
@@ -159,18 +159,27 @@ class TasksModule {
     task.done = !task.done;
     if (task.done) {
       this.points += (task.points || 10);
-      window.showToast(`+${task.points || 10} ✨ Отлично!`, '🎉');
+      if (typeof window.showToast === 'function') {
+        window.showToast(`+${task.points || 10} ✨ Отлично!`, '🎉');
+      }
     }
     this.save();
-    this.render(this.container);
+    if (this.container) this.render(this.container);
   }
 
   async deleteTask(index) {
-    const confirmed = await window.confirmDialog('Удалить задачу?', 'Это действие нельзя отменить');
-    if (confirmed) {
-      this.tasks.splice(index, 1);
-      this.save();
-      this.render(this.container);
+    let confirmed = false;
+    if (typeof window.confirmDialog === 'function') {
+      confirmed = await window.confirmDialog('Удалить задачу?', 'Это действие нельзя отменить');
+    } else {
+      confirmed = confirm('Удалить задачу?');
+    }
+    if (!confirmed) return;
+    
+    this.tasks.splice(index, 1);
+    this.save();
+    if (this.container) this.render(this.container);
+    if (typeof window.showToast === 'function') {
       window.showToast('Задача удалена 🗑️');
     }
   }
@@ -180,11 +189,14 @@ class TasksModule {
     localStorage.setItem('tasksPoints', String(this.points));
   }
 
-  // Публичный метод для FAB
   async showAddModal() {
     this.editingIndex = null;
     await this.showTaskForm();
   }
 }
 
-window.Core?.registerModule('tasks', new TasksModule());
+if (window.Core?.registerModule) {
+  window.Core.registerModule('tasks', new TasksModule());
+} else {
+  window.TasksModule = new TasksModule();
+}

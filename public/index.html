@@ -489,7 +489,65 @@
 
 <!-- Toast -->
 <div id="toast" class="toast"><span id="toastIcon">✨</span><span id="toastText"></span></div>
+<script>
+  // Глобальные утилиты — определяем ДО загрузки модулей
+  window.showToast = function(text, icon = '✨') {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    document.getElementById('toastIcon').textContent = icon;
+    document.getElementById('toastText').textContent = text;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  };
 
+  window.confirmDialog = function(message, subtext = 'Это действие нельзя отменить') {
+    return new Promise(resolve => {
+      const modal = document.getElementById('confirmModal');
+      if (!modal) return resolve(false);
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmSubtext').textContent = subtext;
+      modal.classList.add('active');
+      
+      const cleanup = (result) => {
+        modal.classList.remove('active');
+        document.getElementById('confirmOkBtn').onclick = null;
+        document.getElementById('confirmCancelBtn').onclick = null;
+        resolve(result);
+      };
+      document.getElementById('confirmOkBtn').onclick = () => cleanup(true);
+      document.getElementById('confirmCancelBtn').onclick = () => cleanup(false);
+    });
+  };
+
+  window.showModuleModal = function(title, contentHtml, onSave) {
+    return new Promise(resolve => {
+      const modal = document.getElementById('moduleModal');
+      if (!modal) return resolve(false);
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = contentHtml;
+      modal.classList.add('active');
+      
+      const cleanup = (result) => {
+        modal.classList.remove('active');
+        document.getElementById('modalSaveBtn').onclick = null;
+        document.getElementById('modalCancelBtn').onclick = null;
+        resolve(result);
+      };
+      document.getElementById('modalSaveBtn').onclick = () => cleanup(true);
+      document.getElementById('modalCancelBtn').onclick = () => cleanup(false);
+    });
+  };
+
+  window.Core = window.Core || {
+    modules: {},
+    registerModule: function(name, instance) {
+      this.modules[name] = instance;
+    },
+    getModule: function(name) {
+      return this.modules[name];
+    }
+  };
+</script>
 <!-- SYSTEM SCRIPTS - НЕ МЕНЯЕМ ПОРЯДОК И ПУТИ -->
 <!-- === CORE MODULES === -->
 <script src="/src/core/router.js"></script>

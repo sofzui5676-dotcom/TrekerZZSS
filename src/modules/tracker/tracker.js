@@ -1,8 +1,14 @@
+/**
+ * 📅 TrackerModule — Дневник настроения и привычек
+ * Полностью переработан под дизайн "Нежного дневника"
+ */
 class TrackerModule {
   constructor() {
     this.entries = JSON.parse(localStorage.getItem('trackerEntries')) || {};
     this.container = null;
     this.selectedDate = this.toDateKey(new Date());
+    this.currentCalendarDate = new Date();
+    
     this.moodOptions = [
       { emoji: '😭', label: 'Ужасно', value: 1, color: '#EF9A9A' },
       { emoji: '😔', label: 'Плохо', value: 2, color: '#FFCC80' },
@@ -10,26 +16,42 @@ class TrackerModule {
       { emoji: '😊', label: 'Хорошо', value: 4, color: '#A5D6A7' },
       { emoji: '🤩', label: 'Отлично!', value: 5, color: '#80CBC4' }
     ];
+    
+    this.defaultTags = ['💪 Спорт', '📚 Учеба', '🎨 Творчество', '👥 Друзья', '🧘 Медитация', '☕ Отдых', '🚶 Прогулка', '🍽️ Питание'];
   }
 
+  // === УТИЛИТЫ ===
+  
   toDateKey(date) {
-    return date.toISOString().split('T')[0];
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
   }
 
   formatDate(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ru-RU', {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('ru-RU', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
   }
 
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // === ИНИЦИАЛИЗАЦИЯ ===
+
   async init() {
     this.save();
+    console.log('📅 TrackerModule initialized');
   }
 
   render(container) {
     this.container = container;
-    const entry = this.entries[this.selectedDate];
+    const entry = this.entries[this.selectedDate] || {};
     
     container.innerHTML = `
       <div class="card">
@@ -40,9 +62,9 @@ class TrackerModule {
         <!-- Календарь -->
         <div style="background:var(--surface-secondary);border-radius:var(--radius-md);padding:12px;margin-bottom:20px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <button id="prevMonth" class="btn-icon" style="background:var(--surface);font-size:18px">◀</button>
+            <button id="prevMonth" class="btn-icon" style="background:var(--surface);font-size:18px;width:36px;height:36px">◀</button>
             <span id="currentMonth" style="font-weight:600;font-size:16px"></span>
-            <button id="nextMonth" class="btn-icon" style="background:var(--surface);font-size:18px">▶</button>
+            <button id="nextMonth" class="btn-icon" style="background:var(--surface);font-size:18px;width:36px;height:36px">▶</button>
           </div>
           <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12px"></div>
         </div>
@@ -55,34 +77,36 @@ class TrackerModule {
           
           <!-- Выбор настроения -->
           <div style="display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            ${this.moodOptions.map(mood => `
-              <button class="mood-btn ${entry?.mood === mood.value ? 'selected' : ''}" 
-                      data-value="${mood.value}" 
-                      style="width:48px;height:48px;border-radius:50%;border:3px solid ${entry?.mood === mood.value ? mood.color : 'var(--border)'};
-                             background:${entry?.mood === mood.value ? mood.color + '30' : 'var(--surface)'};
-                             font-size:24px;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center"
-                      onmouseenter="this.style.transform='scale(1.1)'" 
-                      onmouseleave="this.style.transform='scale(1)'">
-                ${mood.emoji}
-              </button>
-            `).join('')}
+            ${this.moodOptions.map(mood => {
+              const isSelected = entry.mood === mood.value;
+              return `
+                <button class="mood-btn" data-value="${mood.value}" data-color="${mood.color}"
+                        style="width:48px;height:48px;border-radius:50%;border:3px solid ${isSelected ? mood.color : 'var(--border)'};
+                               background:${isSelected ? mood.color + '30' : 'var(--surface)'};
+                               font-size:24px;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:var(--text)">
+                  ${mood.emoji}
+                </button>
+              `;
+            }).join('')}
           </div>
           
           <!-- Заметка к дню -->
-          <textarea id="dayNote" class="modal-textarea" rows="4" placeholder="Как прошёл день? Напиши пару слов... ✨" style="width:100%;margin:0;margin-bottom:12px">${entry?.note || ''}</textarea>
+          <textarea id="dayNote" class="modal-textarea" rows="4" placeholder="Как прошёл день? Напиши пару слов... ✨" style="width:100%;margin:0;margin-bottom:12px;resize:vertical">${this.escapeHtml(entry.note || '')}</textarea>
           
-          <!-- Теги/категории -->
+          <!-- Теги -->
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
-            ${['💪 Спорт', '📚 Учеба', '🎨 Творчество', '👥 Друзья', '🧘 Медитация'].map(tag => `
-              <button class="tag-btn ${entry?.tags?.includes(tag) ? 'active' : ''}" 
-                      data-tag="${tag}"
-                      style="padding:6px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border);
-                             background:${entry?.tags?.includes(tag) ? 'var(--primary-light)' : 'var(--surface)'};
-                             color:${entry?.tags?.includes(tag) ? 'white' : 'var(--text)'};
-                             cursor:pointer;transition:all 0.2s ease">
-                ${tag}
-              </button>
-            `).join('')}
+            ${this.defaultTags.map(tag => {
+              const isActive = entry.tags?.includes(tag);
+              return `
+                <button class="tag-btn" data-tag="${this.escapeHtml(tag)}"
+                        style="padding:6px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border);
+                               background:${isActive ? 'var(--primary-light)' : 'var(--surface)'};
+                               color:${isActive ? 'white' : 'var(--text)'};
+                               cursor:pointer;transition:all 0.2s ease">
+                  ${tag}
+                </button>
+              `;
+            }).join('')}
           </div>
           
           <button id="saveDay" class="btn-primary" style="width:100%">💾 Сохранить день</button>
@@ -97,37 +121,45 @@ class TrackerModule {
     `;
     
     this.renderCalendar();
-    this.bindEvents();
+    // ВАЖНО: привязываем события после вставки HTML в DOM
+    setTimeout(() => this.bindEvents(), 0);
   }
+
+  // === КАЛЕНДАРЬ ===
 
   renderCalendar() {
     const grid = document.getElementById('calendarGrid');
     const monthLabel = document.getElementById('currentMonth');
     if (!grid || !monthLabel) return;
     
-    const [year, month] = this.selectedDate.split('-').map(Number);
-    const date = new Date(year, month - 1, 1);
+    const year = this.currentCalendarDate.getFullYear();
+    const month = this.currentCalendarDate.getMonth();
     
-    monthLabel.textContent = date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    // Заголовок месяца
+    monthLabel.textContent = new Date(year, month, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
     
-    // Дни недели
+    // Дни недели (Пн-Вс)
     const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-    grid.innerHTML = weekdays.map(d => `<div style="color:var(--text-light);font-weight:500;padding:8px 4px">${d}</div>`).join('');
+    grid.innerHTML = weekdays.map(d => 
+      `<div style="color:var(--text-light);font-weight:500;padding:8px 4px">${d}</div>`
+    ).join('');
     
     // Первый день месяца
-    let firstDay = date.getDay();
+    let firstDay = new Date(year, month, 1).getDay();
     firstDay = firstDay === 0 ? 6 : firstDay - 1; // Пн = 0
     
-    // Дни месяца
-    const daysInMonth = new Date(year, month, 0).getDate();
+    // Количество дней в месяце
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = this.toDateKey(new Date());
     
+    // Пустые ячейки до первого дня
     for (let i = 0; i < firstDay; i++) {
       grid.innerHTML += `<div></div>`;
     }
     
+    // Дни месяца
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const entry = this.entries[dateKey];
       const isToday = dateKey === today;
       const isSelected = dateKey === this.selectedDate;
@@ -138,24 +170,33 @@ class TrackerModule {
                 style="aspect-ratio:1;border-radius:12px;border:none;font-size:13px;cursor:pointer;
                        background:${isSelected ? 'var(--primary)' : isToday ? 'var(--primary-light)' : 'var(--surface)'};
                        color:${isSelected ? 'white' : 'var(--text)'};
-                       position:relative;transition:all 0.2s ease"
-                onmouseenter="if(!this.classList.contains('selected'))this.style.background='var(--primary-light)';this.style.color='white'"
-                onmouseleave="if(!this.classList.contains('selected'))this.style.background='var(--surface)';this.style.color='var(--text)'">
+                       position:relative;transition:all 0.2s ease;font-weight:${isSelected ? '600' : '400'}"
+                aria-label="${dateKey}">
           ${day}
-          ${mood ? `<span style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:10px">${mood.emoji}</span>` : ''}
+          ${mood ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:11px;line-height:1">${mood.emoji}</span>` : ''}
         </button>
       `;
     }
   }
 
+  // === СТАТИСТИКА ===
+
   renderStats() {
-    const entries = Object.values(this.entries);
+    const entries = Object.values(this.entries).filter(e => e.mood || e.note || e.tags?.length);
+    
     if (entries.length === 0) {
-      return `<div class="empty-state" style="padding:20px"><p class="empty-text">Пока нет записей. Начни вести дневник! 🌸</p></div>`;
+      return `
+        <div class="empty-state" style="padding:20px">
+          <p class="empty-text">Пока нет записей. Начни вести дневник! 🌸</p>
+        </div>
+      `;
     }
     
-    // Средняя оценка
-    const avgMood = entries.filter(e => e.mood).reduce((sum, e) => sum + e.mood, 0) / entries.filter(e => e.mood).length || 0;
+    // Средняя оценка настроения
+    const moodEntries = entries.filter(e => e.mood);
+    const avgMood = moodEntries.length > 0 
+      ? moodEntries.reduce((sum, e) => sum + e.mood, 0) / moodEntries.length 
+      : 0;
     const avgMoodEmoji = this.moodOptions.find(m => Math.abs(m.value - avgMood) < 0.5)?.emoji || '😊';
     
     // Серия дней подряд
@@ -203,65 +244,84 @@ class TrackerModule {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const key = this.toDateKey(date);
+      const entry = this.entries[key];
       
-      if (this.entries[key]?.mood) {
+      if (entry?.mood || entry?.note) {
         streak++;
       } else if (i > 0) {
+        // Прерываем серию, если не сегодня пропускаем
         break;
       }
     }
     return streak;
   }
 
+  // === ОБРАБОТЧИКИ СОБЫТИЙ ===
+
   bindEvents() {
     // Навигация по месяцам
-    document.getElementById('prevMonth')?.addEventListener('click', () => {
-      const [year, month] = this.selectedDate.split('-').map(Number);
-      const prev = new Date(year, month - 2, 1);
-      this.selectedDate = this.toDateKey(prev);
-      this.renderCalendar();
-    });
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
     
-    document.getElementById('nextMonth')?.addEventListener('click', () => {
-      const [year, month] = this.selectedDate.split('-').map(Number);
-      const next = new Date(year, month, 1);
-      this.selectedDate = this.toDateKey(next);
-      this.renderCalendar();
-    });
-    
-    // Выбор дня в календаре
-    document.getElementById('calendarGrid')?.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-date]');
-      if (btn) {
-        this.selectedDate = btn.dataset.date;
+    if (prevBtn) {
+      prevBtn.onclick = (e) => {
+        e.preventDefault();
+        this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1);
         this.renderCalendar();
-        this.updateDayView();
-      }
-    });
+      };
+    }
+    
+    if (nextBtn) {
+      nextBtn.onclick = (e) => {
+        e.preventDefault();
+        this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + 1);
+        this.renderCalendar();
+      };
+    }
+    
+    // Выбор дня в календаре (делегирование)
+    const calendarGrid = document.getElementById('calendarGrid');
+    if (calendarGrid) {
+      calendarGrid.onclick = (e) => {
+        const btn = e.target.closest('[data-date]');
+        if (btn) {
+          e.preventDefault();
+          this.selectedDate = btn.dataset.date;
+          this.renderCalendar();
+          this.updateDayView();
+        }
+      };
+    }
     
     // Выбор настроения
     document.querySelectorAll('.mood-btn')?.forEach(btn => {
       btn.onclick = (e) => {
+        e.preventDefault();
+        const mood = parseInt(btn.dataset.value);
+        const color = btn.dataset.color;
+        
+        // Визуальное обновление
         document.querySelectorAll('.mood-btn').forEach(b => {
           b.style.borderColor = 'var(--border)';
           b.style.background = 'var(--surface)';
-          b.classList.remove('selected');
         });
-        const mood = parseInt(btn.dataset.value);
-        const moodData = this.moodOptions.find(m => m.value === mood);
-        btn.style.borderColor = moodData.color;
-        btn.style.background = moodData.color + '30';
-        btn.classList.add('selected');
+        btn.style.borderColor = color;
+        btn.style.background = color + '30';
         
-        // Авто-сохранение настроения
+        // Сохранение
         this.saveDayEntry({ mood });
-        this.renderCalendar();
+        this.renderCalendar(); // Обновить эмодзи в календаре
+        if (typeof window.showToast === 'function') {
+          const label = this.moodOptions.find(m => m.value === mood)?.label || '';
+          window.showToast(`Настроение: ${label} ${btn.textContent}`, '✨');
+        }
       };
     });
     
     // Теги
     document.querySelectorAll('.tag-btn')?.forEach(btn => {
-      btn.onclick = () => {
+      btn.onclick = (e) => {
+        e.preventDefault();
         btn.classList.toggle('active');
         const tag = btn.dataset.tag;
         const entry = this.entries[this.selectedDate] || {};
@@ -269,90 +329,166 @@ class TrackerModule {
         
         if (btn.classList.contains('active')) {
           if (!entry.tags.includes(tag)) entry.tags.push(tag);
+          btn.style.background = 'var(--primary-light)';
+          btn.style.color = 'white';
         } else {
           entry.tags = entry.tags.filter(t => t !== tag);
+          btn.style.background = 'var(--surface)';
+          btn.style.color = 'var(--text)';
         }
         this.entries[this.selectedDate] = entry;
+        // Не сохраняем сразу — дадим пользователю нажать "Сохранить"
       };
     });
     
     // Сохранение дня
-    document.getElementById('saveDay')?.addEventListener('click', () => {
-      const note = document.getElementById('dayNote')?.value.trim();
-      const entry = this.entries[this.selectedDate] || {};
-      
-      if (note) entry.note = note;
-      this.entries[this.selectedDate] = entry;
-      
-      this.save();
-      this.updateDayView();
-      window.showToast('День сохранён 🌸');
-    });
+    const saveBtn = document.getElementById('saveDay');
+    if (saveBtn) {
+      saveBtn.onclick = (e) => {
+        e.preventDefault();
+        this.saveCurrentDay();
+      };
+    }
     
-    // Авто-сохранение заметки при потере фокуса
-    document.getElementById('dayNote')?.addEventListener('blur', (e) => {
-      const note = e.target.value.trim();
-      const entry = this.entries[this.selectedDate] || {};
-      if (note || entry.note) {
-        entry.note = note;
-        this.entries[this.selectedDate] = entry;
-        this.save();
-      }
-    });
+    // Авто-сохранение заметки при потере фокуса (опционально)
+    const noteEl = document.getElementById('dayNote');
+    if (noteEl) {
+      noteEl.onblur = (e) => {
+        const note = e.target.value.trim();
+        const entry = this.entries[this.selectedDate] || {};
+        if (note !== (entry.note || '')) {
+          entry.note = note;
+          this.entries[this.selectedDate] = entry;
+          this.save(); // Автосохранение только заметки
+        }
+      };
+    }
   }
 
+  // === СОХРАНЕНИЕ ===
+
   updateDayView() {
-    const entry = this.entries[this.selectedDate];
+    const entry = this.entries[this.selectedDate] || {};
     
     // Обновить кнопки настроения
     document.querySelectorAll('.mood-btn')?.forEach(btn => {
       const value = parseInt(btn.dataset.value);
-      const moodData = this.moodOptions.find(m => m.value === value);
-      const isSelected = entry?.mood === value;
+      const color = btn.dataset.color;
+      const isSelected = entry.mood === value;
       
-      btn.style.borderColor = isSelected ? moodData.color : 'var(--border)';
-      btn.style.background = isSelected ? moodData.color + '30' : 'var(--surface)';
-      btn.classList.toggle('selected', isSelected);
+      btn.style.borderColor = isSelected ? color : 'var(--border)';
+      btn.style.background = isSelected ? color + '30' : 'var(--surface)';
     });
     
     // Обновить заметку
     const noteEl = document.getElementById('dayNote');
-    if (noteEl) noteEl.value = entry?.note || '';
+    if (noteEl) {
+      noteEl.value = this.escapeHtml(entry.note || '');
+    }
     
     // Обновить теги
     document.querySelectorAll('.tag-btn')?.forEach(btn => {
       const tag = btn.dataset.tag;
-      btn.classList.toggle('active', entry?.tags?.includes(tag));
-      btn.style.background = entry?.tags?.includes(tag) ? 'var(--primary-light)' : 'var(--surface)';
-      btn.style.color = entry?.tags?.includes(tag) ? 'white' : 'var(--text)';
+      const isActive = entry.tags?.includes(tag);
+      btn.classList.toggle('active', isActive);
+      btn.style.background = isActive ? 'var(--primary-light)' : 'var(--surface)';
+      btn.style.color = isActive ? 'white' : 'var(--text)';
     });
     
     // Обновить статистику
     const statsEl = document.getElementById('statsContent');
-    if (statsEl) statsEl.innerHTML = this.renderStats();
+    if (statsEl) {
+      statsEl.innerHTML = this.renderStats();
+    }
   }
 
   saveDayEntry(partial) {
     const entry = this.entries[this.selectedDate] || {};
-    this.entries[this.selectedDate] = { ...entry, ...partial, date: this.selectedDate };
+    this.entries[this.selectedDate] = { 
+      ...entry, 
+      ...partial, 
+      date: this.selectedDate,
+      updated: new Date().toISOString()
+    };
+  }
+
+  saveCurrentDay() {
+    const noteEl = document.getElementById('dayNote');
+    const note = noteEl?.value.trim() || '';
+    
+    this.saveDayEntry({ note });
     this.save();
+    this.updateDayView();
+    
+    if (typeof window.showToast === 'function') {
+      window.showToast('День сохранён 🌸');
+    }
   }
 
   save() {
-    localStorage.setItem('trackerEntries', JSON.stringify(this.entries));
+    try {
+      localStorage.setItem('trackerEntries', JSON.stringify(this.entries));
+    } catch (e) {
+      console.error('❌ Failed to save tracker:', e);
+      if (typeof window.showToast === 'function') {
+        window.showToast('Ошибка сохранения ⚠️', '⚠️');
+      }
+    }
   }
 
-  // Публичный метод для FAB
+  // === ПУБЛИЧНЫЕ МЕТОДЫ ДЛЯ ИНТЕГРАЦИИ ===
+
   async showAddModal() {
-    // Открываем редактор для текущего дня
-    const noteEl = document.getElementById('dayNote');
-    if (noteEl) {
-      noteEl.focus();
-      window.showToast('Напиши, как прошёл день ✨');
+    // Вызывается при нажатии на FAB
+    // Переключаемся на сегодня и фокусируем заметку
+    this.selectedDate = this.toDateKey(new Date());
+    this.currentCalendarDate = new Date();
+    
+    if (this.container) {
+      this.render(this.container);
+    }
+    
+    // Фокус на поле заметки после рендера
+    setTimeout(() => {
+      const noteEl = document.getElementById('dayNote');
+      if (noteEl) {
+        noteEl.focus();
+        if (typeof window.showToast === 'function') {
+          window.showToast('Напиши, как прошёл день ✨');
+        }
+      }
+    }, 100);
+  }
+
+  // Метод для внешней установки даты (например, из календаря в другом модуле)
+  selectDate(dateStr) {
+    const key = this.toDateKey(dateStr);
+    if (key) {
+      this.selectedDate = key;
+      this.currentCalendarDate = new Date(key);
+      if (this.container) {
+        this.render(this.container);
+      }
     }
   }
 }
 
-// Глобальный экземпляр
-window.TrackerInstance = new TrackerModule();
-window.Core?.registerModule('tracker', window.TrackerInstance);
+// === РЕГИСТРАЦИЯ МОДУЛЯ ===
+
+// Создаём экземпляр
+const trackerInstance = new TrackerModule();
+
+// Регистрация с проверкой Core
+if (typeof window.Core !== 'undefined' && typeof window.Core.registerModule === 'function') {
+  window.Core.registerModule('tracker', trackerInstance);
+  console.log('✅ TrackerModule registered via Core');
+} else {
+  // Fallback: глобальная переменная
+  window.TrackerModule = trackerInstance;
+  console.log('✅ TrackerModule registered globally');
+}
+
+// Экспорт для отладки
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = TrackerModule;
+}
