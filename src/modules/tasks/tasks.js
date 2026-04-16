@@ -2,149 +2,189 @@ class TasksModule {
   constructor() {
     this.tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     this.points = parseInt(localStorage.getItem('tasksPoints')) || 0;
+    this.container = null;
+    this.editingIndex = null;
   }
 
   async init() {
-  
+    this.save();
   }
 
   render(container) {
+    this.container = container;
+    const completed = this.tasks.filter(t => t.done).length;
+    
     container.innerHTML = `
-      <div class="tasks-header">
-        <h2>📝 Задачи <span class="points">(${this.points} очков)</span></h2>
-        <button class="add-task-btn">➕ Новая задача</button>
-      </div>
-      <div class="tasks-list"></div>
-      <div class="tasks-form" style="display:none;">
-        <input id="task-title" placeholder="Название задачи" />
-        <textarea id="task-desc" placeholder="Описание"></textarea>
-        <div class="form-actions">
-          <button id="task-save">Сохранить</button>
-          <button id="task-cancel">Отмена</button>
+      <div class="card">
+        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span>📝 Задачи 
+            <span class="task-stats" style="color:var(--text-light);font-weight:400;font-size:14px">
+              (${completed}/${this.tasks.length}) • ${this.points} ✨
+            </span>
+          </span>
+          <button class="btn-primary" id="addTaskBtn" style="width:auto;padding:10px 20px;font-size:14px">➕ Добавить</button>
+        </div>
+        
+        <div class="tasks-list" style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+          ${this.renderTasksList()}
         </div>
       </div>
     `;
-
-    this.renderTasks();
     this.bindEvents();
   }
 
-  renderTasks() {
-    const list = document.querySelector('.tasks-list');
-    list.innerHTML = this.tasks.map((task, i) => `
-      <div class="task-item ${task.done ? 'done' : ''}" data-index="${i}">
-        <div class="task-checkbox">
-          <input type="checkbox" ${task.done ? 'checked' : ''}>
+  renderTasksList() {
+    if (this.tasks.length === 0) {
+      return `
+        <div class="empty-state" style="padding:32px 16px;margin:0">
+          <div class="empty-icon" style="font-size:48px;margin-bottom:12px">✅</div>
+          <p class="empty-text">Нет задач. Добавь первую и получи +10 ✨!</p>
         </div>
-        <div class="task-content">
-          <h3>${task.title}</h3>
-          <p>${task.desc}</p>
-          <small>${new Date(task.created).toLocaleDateString()}</small>
+      `;
+    }
+
+    // Сортировка: незавершённые сверху
+    const sorted = [...this.tasks].sort((a, b) => {
+      if (a.done === b.done) return new Date(b.created) - new Date(a.created);
+      return a.done ? 1 : -1;
+    });
+
+    return sorted.map(task => {
+      const index = this.tasks.indexOf(task);
+      const date = new Date(task.created).toLocaleDateString('ru-RU', {
+        day: 'numeric', month: 'short'
+      });
+      return `
+        <div class="item ${task.done ? 'done' : ''}" data-index="${index}" style="${task.done ? 'opacity:0.7' : ''}">
+          <div class="item-checkbox ${task.done ? 'checked' : ''}" data-action="toggle">
+            ${task.done ? '✓' : ''}
+          </div>
+          <div class="item-content" style="min-width:0;flex:1">
+            <div class="item-title" style="${task.done ? 'text-decoration:line-through' : ''}">${this.escapeHtml(task.title)}</div>
+            ${task.desc ? `<div class="item-note">${this.escapeHtml(task.desc)}</div>` : ''}
+            <div class="item-meta">📅 ${date}${task.done ? ' • ✅' : ''}</div>
+          </div>
+          <div class="item-actions">
+            <button class="btn-icon edit-task" title="Редактировать">✏️</button>
+            <button class="btn-icon delete-task" title="Удалить">🗑️</button>
+          </div>
         </div>
-        <div class="task-actions">
-          <button class="edit-task">✏️</button>
-          <button class="delete-task">🗑️</button>
-        </div>
-      </div>
-    `).join('') || '<p style="text-align:center;color:#666;">Нет задач. Добавьте первую!</p>';
+      `;
+    }).join('');
+  }
+
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   bindEvents() {
-    // Add task
-    document.querySelector('.add-task-btn').onclick = () => {
-      document.querySelector('.tasks-form').style.display = 'block';
-      document.querySelector('#task-title').focus();
-    };
+    // Добавить задачу
+    document.getElementById('addTaskBtn')?.addEventListener('click', () => {
+      this.editingIndex = null;
+      this.showTaskForm();
+    });
 
-    // Save task
-    document.querySelector('#task-save').onclick = () => this.saveTask();
-
-    // Cancel
-    document.querySelector('#task-cancel').onclick = () => {
-      document.querySelector('.tasks-form').style.display = 'none';
-      this.clearForm();
-    };
-
-    // Task interactions
-    document.querySelector('.tasks-list').addEventListener('click', (e) => {
-      const item = e.target.closest('.task-item');
+    // Делегирование событий
+    document.querySelector('.tasks-list')?.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-index]');
       if (!item) return;
-
       const index = parseInt(item.dataset.index);
-      
-      if (e.target.closest('.task-checkbox input')) {
+
+      if (e.target.closest('[data-action="toggle"]') || e.target.closest('.item-checkbox')) {
         this.toggleTask(index);
       } else if (e.target.closest('.edit-task')) {
-        this.editTask(index);
+        e.stopPropagation();
+        this.editingIndex = index;
+        this.showTaskForm();
       } else if (e.target.closest('.delete-task')) {
+        e.stopPropagation();
         this.deleteTask(index);
       }
     });
   }
 
-  saveTask() {
-    const title = document.querySelector('#task-title').value.trim();
-    const desc = document.querySelector('#task-desc').value.trim();
+  async showTaskForm() {
+    const task = this.editingIndex !== null ? this.tasks[this.editingIndex] : null;
     
-    if (!title) return;
+    const content = `
+      <input type="text" id="taskTitle" class="modal-input" placeholder="Название задачи *" value="${task?.title || ''}" style="width:100%;margin:0;margin-bottom:12px">
+      <textarea id="taskDesc" class="modal-textarea" rows="3" placeholder="Описание (необязательно)" style="width:100%;margin:0">${task?.desc || ''}</textarea>
+    `;
+    
+    await window.showModuleModal(
+      task ? '✏️ Редактировать задачу' : '📝 Новая задача',
+      content,
+      () => this.saveTask()
+    );
+  }
 
-    this.tasks.push({
-      title, desc, done: false, 
-      created: new Date().toISOString()
-    });
+  saveTask() {
+    const title = document.getElementById('taskTitle')?.value.trim();
+    const desc = document.getElementById('taskDesc')?.value.trim();
+    
+    if (!title) {
+      window.showToast('Введите название задачи ⚠️', '⚠️');
+      return;
+    }
 
+    if (this.editingIndex !== null) {
+      // Редактирование
+      this.tasks[this.editingIndex].title = title;
+      this.tasks[this.editingIndex].desc = desc;
+      this.tasks[this.editingIndex].updated = new Date().toISOString();
+      window.showToast('Задача обновлена ✨');
+    } else {
+      // Новая задача
+      this.tasks.unshift({
+        title,
+        desc,
+        done: false,
+        created: new Date().toISOString(),
+        points: 10
+      });
+      window.showToast('Задача создана 🌸');
+    }
+    
     this.save();
-    this.renderTasks();
-    document.querySelector('.tasks-form').style.display = 'none';
-    this.clearForm();
+    this.render(this.container);
   }
 
   toggleTask(index) {
-    this.tasks[index].done = !this.tasks[index].done;
-    if (this.tasks[index].done) this.points += 10;
-    this.save();
-    this.renderTasks();
-  }
-
-  editTask(index) {
     const task = this.tasks[index];
-    document.querySelector('#task-title').value = task.title;
-    document.querySelector('#task-desc').value = task.desc;
-    document.querySelector('.tasks-form').style.display = 'block';
+    if (!task) return;
     
-    // Перехватываем save для edit
-    document.querySelector('#task-save').onclick = () => {
-      this.tasks[index].title = document.querySelector('#task-title').value;
-      this.tasks[index].desc = document.querySelector('#task-desc').value;
-      this.save();
-      this.renderTasks();
-      document.querySelector('.tasks-form').style.display = 'none';
-      this.clearForm();
-    };
+    task.done = !task.done;
+    if (task.done) {
+      this.points += (task.points || 10);
+      window.showToast(`+${task.points || 10} ✨ Отлично!`, '🎉');
+    }
+    this.save();
+    this.render(this.container);
   }
 
-  deleteTask(index) {
-    if (confirm('Удалить задачу?')) {
+  async deleteTask(index) {
+    const confirmed = await window.confirmDialog('Удалить задачу?', 'Это действие нельзя отменить');
+    if (confirmed) {
       this.tasks.splice(index, 1);
       this.save();
-      this.renderTasks();
+      this.render(this.container);
+      window.showToast('Задача удалена 🗑️');
     }
-  }
-
-  clearForm() {
-    document.querySelector('#task-title').value = '';
-    document.querySelector('#task-desc').value = '';
   }
 
   save() {
     localStorage.setItem('tasks', JSON.stringify(this.tasks));
-  localStorage.setItem('tasksPoints', String(this.points));
-
-  const pointsEl = this.container?.querySelector('.points');
-  if (pointsEl) {
-    pointsEl.textContent = `(${this.points} очков)`;
+    localStorage.setItem('tasksPoints', String(this.points));
   }
+
+  // Публичный метод для FAB
+  async showAddModal() {
+    this.editingIndex = null;
+    await this.showTaskForm();
   }
 }
 
-window.Core.registerModule('tasks', new TasksModule());
+window.Core?.registerModule('tasks', new TasksModule());

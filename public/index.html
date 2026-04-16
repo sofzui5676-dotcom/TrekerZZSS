@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="./src/styles/variables.css">
     
     <style>
+        
         /* === БАЗОВЫЕ СТИЛИ === */
         *{margin:0;padding:0;box-sizing:border-box}
         :root{
@@ -336,6 +337,56 @@
             outline: none; border-color: var(--primary-light);
             box-shadow: 0 0 0 3px rgba(255,182,193,0.2);
         }
+        /* === TRACKER SPECIFIC === */
+.calendar-day.selected {
+  box-shadow: 0 0 0 3px var(--primary-light) !important;
+}
+.calendar-day.today::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+.mood-btn.selected {
+  transform: scale(1.15) !important;
+  box-shadow: 0 4px 15px rgba(128, 203, 196, 0.4);
+}
+.tag-btn.active {
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(255, 154, 174, 0.3);
+}
+
+/* === TASKS SPECIFIC === */
+.item.done .item-title {
+  text-decoration: line-through;
+  color: var(--text-light);
+}
+.item.done .item-checkbox {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: white;
+}
+
+/* === NOTES SPECIFIC === */
+.notes-grid .item:hover {
+  background: linear-gradient(90deg, var(--surface-secondary), rgba(128, 203, 196, 0.15));
+}
+
+/* === RESPONSIVE FIXES === */
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 16px !important;
+  }
+  .btn-primary {
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+  }
+}
     </style>
 </head>
 <body>

@@ -1,6 +1,7 @@
 class NotesModule {
   constructor() {
     this.notes = JSON.parse(localStorage.getItem('notes')) || [];
+    this.container = null;
   }
 
   async init() {
@@ -8,144 +9,163 @@ class NotesModule {
   }
 
   render(container) {
+    this.container = container;
     container.innerHTML = `
-      <div class="notes-header">
-        <h2>📔 Заметки <span class="notes-count">(${this.notes.length})</span></h2>
-        <div class="notes-controls">
-          <input id="notes-search" placeholder="🔍 Поиск заметок..." />
-          <button class="add-note-btn">➕ Новая заметка</button>
+      <div class="card">
+        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+          <span>📔 Заметки <span class="notes-count" style="color:var(--text-light);font-weight:400">(${this.notes.length})</span></span>
+          <button class="btn-primary" id="addNoteBtn" style="width:auto;padding:10px 20px;font-size:14px">➕ Новая</button>
         </div>
-      </div>
-      
-      <div class="notes-grid">
-        <!-- Заметки рендерятся динамически -->
-      </div>
-      
-      <div class="note-editor" style="display:none;">
-        <textarea id="note-content" placeholder="Напиши заметку..."></textarea>
-        <div class="editor-actions">
-          <button id="note-save">💾 Сохранить</button>
-          <button id="note-cancel">❌ Отмена</button>
+        
+        <div style="margin-bottom:16px">
+          <input type="text" id="notesSearch" class="modal-input" placeholder="🔍 Поиск заметок..." style="width:100%;margin:0">
+        </div>
+        
+        <div class="notes-grid" style="display:grid;gap:12px">
+          ${this.renderNotesList()}
         </div>
       </div>
     `;
-
-    this.renderNotes();
     this.bindEvents();
   }
 
-  renderNotes(filter = '') {
-    const grid = document.querySelector('.notes-grid');
+  renderNotesList(filter = '') {
     const filtered = this.notes.filter(note => 
       note.content.toLowerCase().includes(filter.toLowerCase())
     );
 
-    grid.innerHTML = filtered.map((note, i) => `
-      <div class="note-card" data-index="${i}">
-        <div class="note-preview">
-          ${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}
+    if (filtered.length === 0) {
+      return `
+        <div class="empty-state" style="padding:32px 16px">
+          <div class="empty-icon" style="font-size:48px;margin-bottom:12px">📝</div>
+          <p class="empty-text">Нет заметок. Создай первую!</p>
         </div>
-        <div class="note-meta">
-          <small>${new Date(note.created).toLocaleDateString()}</small>
-          <div class="note-actions">
-            <button class="edit-note">✏️</button>
-            <button class="delete-note">🗑️</button>
+      `;
+    }
+
+    return filtered.map((note, i) => {
+      const originalIndex = this.notes.indexOf(note);
+      const date = new Date(note.created).toLocaleDateString('ru-RU', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      });
+      return `
+        <div class="item" data-index="${originalIndex}" style="cursor:pointer;position:relative">
+          <div class="item-content" style="min-width:0">
+            <div class="item-title" style="word-break:break-word">${this.escapeHtml(note.content.substring(0, 80))}${note.content.length > 80 ? '...' : ''}</div>
+            <div class="item-meta">${date}</div>
+          </div>
+          <div class="item-actions">
+            <button class="btn-icon edit-note" title="Редактировать">✏️</button>
+            <button class="btn-icon delete-note" title="Удалить">🗑️</button>
           </div>
         </div>
-      </div>
-    `).join('') || '<div class="empty-state"><p>📝 Нет заметок. Создай первую!</p></div>';
+      `;
+    }).join('');
+  }
 
-    document.querySelector('.notes-count').textContent = `(${filtered.length})`;
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   bindEvents() {
     // Поиск
-    document.querySelector('#notes-search').oninput = (e) => {
-      this.renderNotes(e.target.value);
-    };
+    const searchInput = document.getElementById('notesSearch');
+    if (searchInput) {
+      searchInput.oninput = (e) => {
+        const grid = document.querySelector('.notes-grid');
+        if (grid) grid.innerHTML = this.renderNotesList(e.target.value);
+        document.querySelector('.notes-count').textContent = `(${this.notes.filter(n => 
+          n.content.toLowerCase().includes(e.target.value.toLowerCase())
+        ).length})`;
+      };
+    }
 
-    // Add note
-    document.querySelector('.add-note-btn').onclick = () => {
+    // Добавить заметку
+    document.getElementById('addNoteBtn')?.addEventListener('click', () => {
       this.showEditor();
-    };
+    });
 
-    // Save
-    document.querySelector('#note-save').onclick = () => this.saveNote();
-
-    // Cancel
-    document.querySelector('#note-cancel').onclick = () => {
-      this.hideEditor();
-      this.clearEditor();
-    };
-
-    // Card actions
-    document.querySelector('.notes-grid').addEventListener('click', (e) => {
-      const card = e.target.closest('.note-card');
+    // Делегирование событий для карточек
+    document.querySelector('.notes-grid')?.addEventListener('click', (e) => {
+      const card = e.target.closest('[data-index]');
       if (!card) return;
-
       const index = parseInt(card.dataset.index);
-      
+
       if (e.target.closest('.edit-note')) {
+        e.stopPropagation();
         this.editNote(index);
       } else if (e.target.closest('.delete-note')) {
+        e.stopPropagation();
         this.deleteNote(index);
+      } else {
+        // Просмотр полной заметки
+        this.viewNote(index);
       }
     });
   }
 
-  showEditor(editIndex = null) {
-    this.editingIndex = editIndex;
-    document.querySelector('.note-editor').style.display = 'block';
-    document.querySelector('#note-content').focus();
+  async showEditor(editIndex = null) {
+    const note = editIndex !== null ? this.notes[editIndex] : null;
     
-    if (editIndex !== null) {
-      document.querySelector('#note-content').value = this.notes[editIndex].content;
-      document.querySelector('#note-save').textContent = '✏️ Обновить';
-    }
+    const content = `
+      <textarea id="noteEditorContent" class="modal-textarea" rows="6" placeholder="Напиши свою мысль... ✨" style="width:100%;margin:0">${note?.content || ''}</textarea>
+    `;
+    
+    const saved = await window.showModuleModal(
+      note ? '✏️ Редактировать заметку' : '📝 Новая заметка',
+      content,
+      () => {
+        const content = document.getElementById('noteEditorContent')?.value.trim();
+        if (!content) return;
+        
+        if (editIndex !== null) {
+          this.notes[editIndex].content = content;
+          this.notes[editIndex].updated = new Date().toISOString();
+        } else {
+          this.notes.unshift({
+            content,
+            created: new Date().toISOString(),
+            updated: new Date().toISOString()
+          });
+        }
+        this.save();
+        this.render(this.container);
+        window.showToast(note ? 'Заметка обновлена ✨' : 'Заметка создана 🌸');
+      }
+    );
   }
 
-  hideEditor() {
-    document.querySelector('.note-editor').style.display = 'none';
-    this.clearEditor();
+  async viewNote(index) {
+    const note = this.notes[index];
+    if (!note) return;
+    
+    const date = new Date(note.created).toLocaleDateString('ru-RU', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    const content = `
+      <div style="text-align:left">
+        <div style="font-size:13px;color:var(--text-light);margin-bottom:12px">📅 ${date}</div>
+        <div style="white-space:pre-wrap;line-height:1.6;font-size:15px">${this.escapeHtml(note.content)}</div>
+      </div>
+    `;
+    
+    await window.showModuleModal('📔 Заметка', content);
   }
 
-  clearEditor() {
-    document.querySelector('#note-content').value = '';
-    document.querySelector('#note-save').textContent = '💾 Сохранить';
-    this.editingIndex = null;
+  async editNote(index) {
+    await this.showEditor(index);
   }
 
-  saveNote() {
-    const content = document.querySelector('#note-content').value.trim();
-    if (!content) return;
-
-    if (this.editingIndex !== null) {
-      // Edit
-      this.notes[this.editingIndex].content = content;
-      this.notes[this.editingIndex].updated = new Date().toISOString();
-    } else {
-      // New
-      this.notes.push({
-        content,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString()
-      });
-    }
-
-    this.save();
-    this.renderNotes();
-    this.hideEditor();
-  }
-
-  editNote(index) {
-    this.showEditor(index);
-  }
-
-  deleteNote(index) {
-    if (confirm('Удалить заметку?')) {
+  async deleteNote(index) {
+    const confirmed = await window.confirmDialog('Удалить заметку?', 'Это действие нельзя отменить');
+    if (confirmed) {
       this.notes.splice(index, 1);
       this.save();
-      this.renderNotes();
+      this.render(this.container);
+      window.showToast('Заметка удалена 🗑️');
     }
   }
 
@@ -154,4 +174,4 @@ class NotesModule {
   }
 }
 
-window.Core.registerModule('notes', new NotesModule());
+window.Core?.registerModule('notes', new NotesModule());
